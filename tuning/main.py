@@ -32,6 +32,7 @@ class TuningDeap:
         self.tuning_config: dict = tuning_config
         self.using_config = False
         self.output_path = "output/" if "output_path" not in tuning_config else tuning_config["output_path"]
+        self.output = False if not "output" in tuning_config else True
 
         if original_config is not None:
             self.original_config: dict = original_config
@@ -71,7 +72,8 @@ class TuningDeap:
         stats.register("std", np.std)
         stats.register("min", np.min)
         stats.register("max", np.max)
-        halloffame = tools.HallOfFame(maxsize=self.population_size)
+        if self.output:
+            halloffame = tools.HallOfFame(maxsize=self.population_size)
         topone = tools.HallOfFame(maxsize=1)
 
         for gen in range(0, self.n_generations):
@@ -83,13 +85,14 @@ class TuningDeap:
             for ind, fit in zip(invalid_ind, fitnesses):
                 ind.fitness.values = fit
 
-            halloffame.update(population)   
-            topone.update(population)
-            results = pd.DataFrame({"config": halloffame.items, "score": halloffame.keys})
-            results.to_csv("{}/generation-{}.csv".format(self.output_path, gen))
-            halloffame.clear()
-            record = stats.compile(population)
+            if self.output:
+                halloffame.update(population)   
+                results = pd.DataFrame({"config": halloffame.items, "score": halloffame.keys})
+                results.to_csv("{}/generation-{}.csv".format(self.output_path, gen))
+                halloffame.clear()
 
+            topone.update(population)
+            record = stats.compile(population)
             population = self.toolbox.select(population, k=len(population))
 
         return topone.items[0], topone.keys[0].wvalues[0]
