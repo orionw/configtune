@@ -4,7 +4,6 @@ from deap import tools
 from deap import algorithms
 import argparse
 import typing
-from dummy_model import DummyModel
 import random
 import collections
 import json
@@ -160,7 +159,7 @@ class tuningDeap:
 
         chromosome = []
         self.order_of_keys = []
-        for attribute_name, attribute in tuning_config["attributes"].items():
+        for attribute_name, attribute in self.tuning_config["attributes"].items():
             self.order_of_keys.append(attribute_name)
             assert len(attribute.keys()) == 1
             param_type = str(list(attribute.keys())[0])
@@ -178,17 +177,3 @@ class tuningDeap:
         assert len(chromosome) != 0, "No values were added for the genetic algorithm"
         self.toolbox.register("individual", tools.initCycle, creator.Individual, chromosome, n=1)
         self.toolbox.register("population", tools.initRepeat, list, self.toolbox.individual)
-
-
-
-if __name__ == "__main__":
-    with open("tuning_config_test.json", "r") as file:
-        tuning_config = json.load(file)
-    with open("real_config.json", "r") as file:
-        model_config = json.load(file)
-
-    def eval_function(real_config_updated, n_values):
-        return DummyModel().predict(real_config_updated, n_values)
-
-    tune = tuningDeap(eval_function, tuning_config, model_config)
-    best_model = tune.run_evolutionary()
