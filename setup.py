@@ -14,6 +14,6 @@ setup(
 	],
 	keywords="tuning macinelearning genetic hyperparameters",
 	packages=find_packages(),
-	install_requires=["deap", "numpy"],
+	install_requires=["deap", "numpy", "pandas"],
 	python_requires="~=3.5",
 )

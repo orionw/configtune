@@ -14,7 +14,8 @@ class TestConfig(unittest.TestCase):
         def eval_function(chromosomes, n_values):
             return DummyModel().predict_no_config(chromosomes, n_values)
         tune = TuningDeap(eval_function, self.tuning_config)
-        tune.run_evolutionary()
+        best_config, best_score = tune.run_evolutionary()
+        assert type(best_score) == float, "wrong type was returned, expected float was {}".format(type(best_score))
     
 
     

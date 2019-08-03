@@ -12,6 +12,9 @@ import math
 from functools import reduce
 import operator
 import copy
+import time
+import pickle 
+import pandas as pd
 
 
 class TuningDeap:
@@ -28,6 +31,7 @@ class TuningDeap:
         """
         self.tuning_config: dict = tuning_config
         self.using_config = False
+        self.output_path = "output/" if "output_path" not in tuning_config else tuning_config["output_path"]
 
         if original_config is not None:
             self.original_config: dict = original_config
@@ -56,19 +60,39 @@ class TuningDeap:
         return evaluate_function
 
 
-    def run_evolutionary(self):
+    def run_evolutionary(self) -> (typing.List, float):
         """
         The main function to run the evoluationary algorithm
         """
-        pop = self.toolbox.population(n=self.population_size)
+        population = self.toolbox.population(n=self.population_size)
         hof = tools.HallOfFame(1)
         stats = tools.Statistics(lambda ind: ind.fitness.values)
         stats.register("avg", np.mean)
         stats.register("std", np.std)
         stats.register("min", np.min)
         stats.register("max", np.max)
-        pop, log = algorithms.eaSimple(pop, self.toolbox, cxpb=0.5, mutpb=0.2, ngen=self.n_generations, 
-                                       stats=stats, halloffame=hof, verbose=True)
+        halloffame = tools.HallOfFame(maxsize=self.population_size)
+        topone = tools.HallOfFame(maxsize=1)
+
+        for gen in range(0, self.n_generations):
+            population = algorithms.varAnd(population, self.toolbox, cxpb=0.5, mutpb=0.2)
+
+            # Evaluate the individuals with an invalid fitness
+            invalid_ind = [ind for ind in population if not ind.fitness.valid]
+            fitnesses = self.toolbox.map(self.toolbox.evaluate, invalid_ind)
+            for ind, fit in zip(invalid_ind, fitnesses):
+                ind.fitness.values = fit
+
+            halloffame.update(population)   
+            topone.update(population)
+            results = pd.DataFrame({"config": halloffame.items, "score": halloffame.keys})
+            results.to_csv("{}/generation-{}.csv".format(self.output_path, gen))
+            halloffame.clear()
+            record = stats.compile(population)
+
+            population = self.toolbox.select(population, k=len(population))
+
+        return topone.items[0], topone.keys[0].wvalues[0]
 
     def validate_config(self):
         """
@@ -219,3 +243,4 @@ class TuningDeap:
         # finalize setting up the algorithm by specifying the chromosones, individual makeup, and the population
         self.toolbox.register("individual", tools.initCycle, creator.Individual, chromosome, n=1)
         self.toolbox.register("population", tools.initRepeat, list, self.toolbox.individual)
+

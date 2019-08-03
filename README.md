@@ -7,8 +7,11 @@ A package for tuning machine learning models genetically, with or without a conf
 1. Create your tuning config in the format as follows (json):
 ```
 {
+    "population_size": <int>,
+    "n_generations": <int>,
+    "output_path": <str>,
     "parameter_name_you_want_to_tune": {
-        "<type ="float", "bool", "int">": [lower_bound, upper_bound, step_size]
+        "<type = "float", "int">": [lower_bound, upper_bound, <optional=step_size>]
     },
     "another_parameter": {
         "bool": [] 
@@ -16,6 +19,7 @@ A package for tuning machine learning models genetically, with or without a conf
 }
 ```
 Boolean values don't need any bounds.  The parameter names should match those found in your model config file, if you have one.
+
 2. Create your evaluation function.  This function needs to take in two arguments: a config file/list of values being tuned if no config, and a `n_values` parameter.  Your function needs to return a list of values of size `n_values`.
 
 Example overall usage:
@@ -26,5 +30,5 @@ def eval_function(config_file, n_values):
     return your_eval_function(config_file, n_values)
 
 tune = TuningDeap(eval_function, tuning_config, model_config)
-best_config = tune.run_evolutionary()
+best_config, best_score = tune.run_evolutionary()
 ```

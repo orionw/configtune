@@ -16,7 +16,8 @@ class TestConfig(unittest.TestCase):
         def eval_function(real_config_updated, n_values):
             return DummyModel().predict(real_config_updated, n_values)
         tune = TuningDeap(eval_function, self.tuning_config, self.model_config)
-        tune.run_evolutionary()
+        best_config, best_score = tune.run_evolutionary()
+        assert type(best_score) == float, "wrong type was returned, expected float was {}".format(type(best_score))
     
 
     
