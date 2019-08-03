@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.com/orionw/tuningDEAP.svg?branch=master)](https://travis-ci.com/orionw/tuningDEAP)
 # TuningDEAP
 A package for tuning machine learning models genetically, with or without a config file. 
 
