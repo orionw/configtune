@@ -9,13 +9,11 @@ class TestConfig(unittest.TestCase):
         cwd = os.getcwd()
         with open(os.path.join(cwd, "test", "tuning_config_test.json"), "r") as file:
             self.tuning_config = json.load(file)
-        with open(os.path.join(cwd, "test", "real_test_config.json"), "r") as file:
-            self.model_config = json.load(file)
 
     def test_basic_config(self):
-        def eval_function(real_config_updated, n_values):
-            return DummyModel().predict(real_config_updated, n_values)
-        tune = TuningDeap(eval_function, self.tuning_config, self.model_config)
+        def eval_function(chromosomes, n_values):
+            return DummyModel().predict_no_config(chromosomes, n_values)
+        tune = TuningDeap(eval_function, self.tuning_config)
         tune.run_evolutionary()
     
 
