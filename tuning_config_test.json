@@ -1,0 +1,10 @@
+{
+    "population_size": 10,
+    "n_generations": 5,
+
+    "attributes": {
+        "name1": {"float": [0, 1, 0.1]},
+        "name2": {"bool": []},
+        "name3": {"int": [1, 5, 1]}
+    }
+}
