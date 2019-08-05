@@ -15,7 +15,9 @@ import copy
 import time
 import pickle 
 import pandas as pd
+import logging
 
+logger = logging.getLogger(__name__)
 
 class TuningDeap:
     """
@@ -31,8 +33,15 @@ class TuningDeap:
         """
         self.tuning_config: dict = tuning_config
         self.using_config = False
-        self.output_path = "output/" if "output_path" not in tuning_config else tuning_config["output_path"]
-        self.output = False if not "output" in tuning_config else True
+        # define output parameters if given
+        self.output_path = None if "output_path" not in tuning_config else tuning_config["output_path"]
+        self.output = False if self.output_path is None else True
+
+        self.minimize = True if "minimize" not in tuning_config else tuning_config["minimize"]
+
+        if self.output:
+            logger.setLevel(logging.INFO)
+        logger.info("Output is set to", self.output)
 
         if original_config is not None:
             self.original_config: dict = original_config
@@ -44,6 +53,8 @@ class TuningDeap:
         self.evaluate_outside_function = evaluate_outside_function
         self.evaluate_function: typing.Callable = self.create_evaluate_func()
         self._instatiate_attributes()
+
+        logger.info("Finished initializing.")
 
     def create_evaluate_func(self) -> typing.Callable:
         """
@@ -77,6 +88,7 @@ class TuningDeap:
         topone = tools.HallOfFame(maxsize=1)
 
         for gen in range(0, self.n_generations):
+            print("On generation {}".format(gen))
             population = algorithms.varAnd(population, self.toolbox, cxpb=0.5, mutpb=0.2)
 
             # Evaluate the individuals with an invalid fitness
@@ -86,8 +98,20 @@ class TuningDeap:
                 ind.fitness.values = fit
 
             if self.output:
-                halloffame.update(population)   
-                results = pd.DataFrame({"config": halloffame.items, "score": halloffame.keys})
+                halloffame.update(population)
+                # it's a list of lists
+                individuals = halloffame.items
+                # get the names of the parameters for ease of reading
+                full_named_items = []
+                for list_num, ind_params in enumerate(individuals):
+                    named_items = {}
+                    for index, item in enumerate(ind_params):
+                        name = self.order_of_keys[index]
+                        named_items[name] =  item
+                    named_items["score"] = halloffame.keys[list_num].wvalues[0] * self.optimize
+                    full_named_items.append(named_items)
+                # write out to file 
+                results = pd.DataFrame(full_named_items)
                 results.to_csv("{}/generation-{}.csv".format(self.output_path, gen))
                 halloffame.clear()
 
@@ -185,7 +209,7 @@ class TuningDeap:
             for index, name in enumerate(self.order_of_keys):
                 current_value = chromosome[index]
                 path_to_original = self.map_config[name]
-                self.set_by_path(new_config, path_to_original, current_value)
+                self.set_by_path(new_config, path_to_original, current_value, is_bool=name in self.bool_values)
             return new_config, len(chromosome)
         else:
             return chromosome, len(chromosome)
@@ -199,14 +223,17 @@ class TuningDeap:
         """
         return reduce(operator.getitem, items, root)
 
-    def set_by_path(self, root: dict, items: typing.List[str], value):
+    def set_by_path(self, root: dict, items: typing.List[str], value, is_bool: bool = False):
         """
         Set a value in a nested object in root by item sequence.
         :param root: the dictionary to access
         :param items: the list of strings containing the path
         :param value: the value to set that path to
         """
-        self.get_by_path(root, items[:-1])[items[-1]] = value
+        if is_bool:
+            self.get_by_path(root, items[:-1])[items[-1]] = bool(value)
+        else:
+            self.get_by_path(root, items[:-1])[items[-1]] = value
 
     def _instatiate_attributes(self):
         """
@@ -221,10 +248,12 @@ class TuningDeap:
         self.toolbox.register("mutate", tools.mutFlipBit, indpb=0.05)
         self.toolbox.register("select", self.getConfigOr("select", tools.selTournament), tournsize=3)
         # 1.0 means that we are maximizing the function
-        creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+        self.optimize = -1 if self.minimize else 1
+        creator.create("FitnessMax", base.Fitness, weights=(self.optimize,))
         creator.create("Individual", list, fitness=creator.FitnessMax)
 
         chromosome = []
+        self.bool_values = []
         self.order_of_keys = []
         # for each attribute given to model, set up the required limits and parameters for the genetic algorithm
         for attribute_name, attribute in self.tuning_config["attributes"].items():
@@ -238,6 +267,7 @@ class TuningDeap:
             if param_type == "bool":
                 self.toolbox.register("attr_bool", random.randint, 0, 1)
                 chromosome.append(self.toolbox.attr_bool)
+                self.bool_values.append(attribute_name)
             if param_type == "float":
                 self.toolbox.register("attr_float", self.rand_with_step, attr_values[0], attr_values[1], attr_values[2])
                 chromosome.append(self.toolbox.attr_float)
