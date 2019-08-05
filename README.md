@@ -10,17 +10,20 @@ A package for tuning machine learning models genetically, with or without a conf
     "population_size": <int>,
     "n_generations": <int>,
     "output_path": <str>,
-    "parameter_name_you_want_to_tune": {
-        "<type = "float", "int">": [lower_bound, upper_bound, <optional=step_size>]
-    },
-    "another_parameter": {
-        "bool": [] 
+    "minimize": true,
+    "attributes": {
+        "parameter_name_you_want_to_tune": {
+            "<type = "float", "int">": [lower_bound, upper_bound, <optional=step_size>]
+        },
+        "another_parameter": {
+            "bool": [] 
+        }
     }
 }
 ```
 Boolean values don't need any bounds.  The parameter names should match those found in your model config file, if you have one.
 
-2. Create your evaluation function.  This function needs to take in two arguments: a config file/list of values being tuned if no config, and a `n_values` parameter.  Your function needs to return a list of values of size `n_values`.
+2. Create your evaluation function.  This function needs to take in two arguments: a config file/list of values being tuned if no config, and a `n_values` parameter.  Your function needs to return a tuple with a score, like so: `tuple(score,)`.
 
 Example overall usage:
 ```
