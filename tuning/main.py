@@ -119,7 +119,8 @@ class TuningDeap:
             record = stats.compile(population)
             population = self.toolbox.select(population, k=len(population))
 
-        return topone.items[0], topone.keys[0].wvalues[0]
+        print(topone.keys[0].wvalues[0] * self.optimize)
+        return topone.items[0], float(topone.keys[0].wvalues[0] * self.optimize)
 
     def validate_config(self):
         """
