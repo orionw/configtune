@@ -24,7 +24,7 @@ Boolean values don't need any bounds.  The parameter names should match those fo
 
 Example overall usage:
 ```
-from tuningdeep import TuningDeap
+from tuningdeap import TuningDeap
 
 def eval_function(config_file, n_values):
     return your_eval_function(config_file, n_values)
