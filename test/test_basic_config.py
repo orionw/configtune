@@ -3,6 +3,9 @@ from test.dummy_model import DummyModel
 from tuningdeap import TuningDeap
 import json
 import os
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 class TestConfig(unittest.TestCase):
     def setUp(self):

@@ -41,7 +41,7 @@ class TuningDeap:
 
         if self.output:
             logger.setLevel(logging.INFO)
-        logger.info("Output is set to", self.output)
+        logger.info("Output is set to: {}".format(self.output))
 
         if original_config is not None:
             self.original_config: dict = original_config
@@ -61,14 +61,19 @@ class TuningDeap:
         The function to create the function used by the genetic algorithm. 
         We have to wrap the evaluation function with another function to change the chromosomes into a dict like the `original_config` file.
         """
-        def evaluate_function(values: typing.List) -> typing.List[float]:
+        def evaluate_function(values: typing.List) -> typing.Tuple:
             """
             Simply map the chromosome values into a dict like the original config file and return that to the evaluate function
             :param values: the "chromosone" or parameter for this "individual"
-            :return a list where each index corresponds to a parameter in the chromosome
+            :return a tuple containing the score of fitness
             """
             config, n_values = self.map_tuning_config_back(values)
-            return self.evaluate_outside_function(config, n_values)
+            try:
+                return self.evaluate_outside_function(config, n_values)
+            except Exception as e:
+                if self.output:
+                    logger.debug("There was an exception evaluating: {}".format(e))
+                return tuple((float('inf'), )) if self.minimize else tuple((float("-inf"), ))
         return evaluate_function
 
 
@@ -78,20 +83,26 @@ class TuningDeap:
         """
         population = self.toolbox.population(n=self.population_size)
         hof = tools.HallOfFame(1)
-        stats = tools.Statistics(lambda ind: ind.fitness.values)
-        stats.register("avg", np.mean)
-        stats.register("std", np.std)
-        stats.register("min", np.min)
-        stats.register("max", np.max)
+
         if self.output:
             halloffame = tools.HallOfFame(maxsize=self.population_size)
         topone = tools.HallOfFame(maxsize=1)
 
         for gen in range(0, self.n_generations):
             print("On generation {}".format(gen))
-            population = algorithms.varAnd(population, self.toolbox, cxpb=0.5, mutpb=0.2)
+
+            # enforce our own limits on parameters regardless of mutations
+            iterations = 0
+            final_population = []
+            while len(final_population) < int(self.population_size * .8) and iterations < 10:
+                iterations += 1
+                init_population = algorithms.varAnd(population, self.toolbox, cxpb=0.5, mutpb=0.2)
+                final_population += self.enforce_limits(init_population)
+            if iterations == 10:
+                logger.info("Population spend more than 10 tries of generation due to bounds.")
 
             # Evaluate the individuals with an invalid fitness
+            population = final_population
             invalid_ind = [ind for ind in population if not ind.fitness.valid]
             fitnesses = self.toolbox.map(self.toolbox.evaluate, invalid_ind)
             for ind, fit in zip(invalid_ind, fitnesses):
@@ -116,11 +127,60 @@ class TuningDeap:
                 halloffame.clear()
 
             topone.update(population)
-            record = stats.compile(population)
             population = self.toolbox.select(population, k=len(population))
 
-        print(topone.keys[0].wvalues[0] * self.optimize)
+        if len(topone) == 0:
+            return [], float("inf") if self.minimize else float("-inf")
+
         return topone.items[0], float(topone.keys[0].wvalues[0] * self.optimize)
+
+    def enforce_limits(self, init_population: typing.List[typing.List]) -> typing.List[typing.List]:
+        """ 
+        Enforces the given limits on the mutated/crossovered population since deap does not.
+        :param init_population: a list of lists containing `inividual's chromosomes`
+        :return a list of lists representing the valid members of the population
+        """
+        final_population = []
+        for individual in init_population:
+            invalid = False
+            for index, parameter in enumerate(individual):
+                parameter_name = self.order_of_keys[index]
+                parameter_info = self.tuning_config["attributes"][parameter_name]
+                parameter_bounds = list(parameter_info.values())[0]
+                if list(parameter_info.keys())[0] != "bool":
+                    if parameter_bounds[0] <= parameter <= parameter_bounds[1]:
+                        try:
+                            # see if strict bounds are enforced
+                            if parameter_bounds[4] and self.enforce_steps(parameter, parameter_bounds):
+                                continue
+                        except IndexError:
+                            continue
+                    else:
+                        if self.output:
+                            logger.info("Rejecting float/int parameter for individual: {}={} with bounds: {}".format(parameter_name, parameter,
+                                        " ".join([item for item in parameter_bounds])))
+                        invalid = True
+                        break
+                else:
+                    # handle the boolean case
+                    if parameter == 0 or parameter == 1:
+                        continue
+                    else: 
+                        if self.output:
+                            logger.info("Rejecting boolean parameter for individual: {} with bounds: {}".format(parameter_name, parameter))
+                        invalid = True
+                        break
+            if not invalid:
+                final_population.append(copy.deepcopy(individual))
+    
+        if self.output:
+            logger.info("The population has a size of {} after rejecting the invalid: should be {}".format(len(final_population), self.population_size))
+        return final_population
+
+    def enforce_steps(self, parameter, parameter_bounds: typing.List) -> bool:
+        # TODO: add the enforcement for this step
+        return True
+
 
     def validate_config(self):
         """
