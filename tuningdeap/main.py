@@ -158,7 +158,7 @@ class TuningDeap:
                     else:
                         if self.output:
                             logger.info("Rejecting float/int parameter for individual: {}={} with bounds: {}".format(parameter_name, parameter,
-                                        " ".join([item for item in parameter_bounds])))
+                                        " ".join([str(item) for item in parameter_bounds])))
                         invalid = True
                         break
                 else:
