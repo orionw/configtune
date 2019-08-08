@@ -67,9 +67,9 @@ class TuningDeap:
             :param values: the "chromosone" or parameter for this "individual"
             :return a tuple containing the score of fitness
             """
-            config, n_values = self.map_tuning_config_back(values)
+            config = self.map_tuning_config_back(values)
             try:
-                return self.evaluate_outside_function(config, n_values)
+                return self.evaluate_outside_function(config)
             except Exception as e:
                 if self.output:
                     logger.debug("There was an exception evaluating: {}".format(e))
@@ -259,11 +259,11 @@ class TuningDeap:
                 raise ValueError("Tuning config contained a attribute parameter not in the original config: {}".format(key))
         return mapping
 
-    def map_tuning_config_back(self, chromosome: typing.List) -> (dict, int):
+    def map_tuning_config_back(self, chromosome: typing.List) -> typing.Container:
         """
         Maps the list of chromosomes back into a dict with the same structure as the original config file
         :param chromosome: a list of values for that individual in the population
-        :return a dict containing the individuals values, but in the original config file form
+        :return a dict containing the individuals values, but in the original config file form if using a config file, else a list of parameters
         """
         if self.using_config:
             new_config = copy.deepcopy(self.original_config)
@@ -271,9 +271,9 @@ class TuningDeap:
                 current_value = chromosome[index]
                 path_to_original = self.map_config[name]
                 self.set_by_path(new_config, path_to_original, current_value, is_bool=name in self.bool_values)
-            return new_config, len(chromosome)
+            return new_config
         else:
-            return chromosome, len(chromosome)
+            return chromosome
 
     def get_by_path(self, root: dict, items: typing.List[str]):
         """

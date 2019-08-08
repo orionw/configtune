@@ -23,14 +23,14 @@ A package for tuning machine learning models genetically, with or without a conf
 ```
 Boolean values don't need any bounds.  The parameter names should match those found in your model config file, if you have one.
 
-2. Create your evaluation function.  This function needs to take in two arguments: a config file/list of values being tuned if no config, and a `n_values` parameter.  Your function needs to return a tuple with a score, like so: `tuple(score,)`.
+2. Create your evaluation function.  This function needs to take in a config file or a list of values being tuned if you're not using a config.  Your function needs to return a tuple with a score, like so: `tuple(0.1,)`.
 
 Example overall usage:
 ```
 from tuningdeap import TuningDeap
 
-def eval_function(config_file, n_values):
-    return your_eval_function(config_file, n_values)
+def eval_function(config_file):
+    return your_eval_function(config_file)
 
 tune = TuningDeap(eval_function, tuning_config, model_config)
 best_config, best_score = tune.run_evolutionary()
