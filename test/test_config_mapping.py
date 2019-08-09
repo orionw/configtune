@@ -96,7 +96,7 @@ class TestConfigMapping(unittest.TestCase):
         assert value == bool(new_value) and type(value) == bool, "did not set the correct value from the map, expected {} but got {} (which is not the original {})".format("bool", bool(new_value), type(value), value)
         set_by_path(test_config, path, new_value, is_bool=False)
         int_value = get_by_path(test_config, path)
-        assert new_value == int_value and type(int_value) == int, "did not set the correct value from the map, expected type {} = {} but got type {} = {})".format("int", int_value, type(int_value), new_value)
+        assert value == int_value and type(int_value) == int, "did not set the correct value from the map, expected type {} = {} but got type {} = {})".format("int", int_value, type(int_value), new_value)
 
     def test_set_from_map_invalid(self):
         test_value = "three_levels"
