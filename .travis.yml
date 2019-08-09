@@ -12,4 +12,4 @@ script:
   - coverage run run_tests.py
 
 after_success:
-  - codecov
+  - codecov --token=$CODECOV_TOKEN
