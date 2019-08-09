@@ -12,8 +12,8 @@ setup(
 	classifiers=[
 		"Programming Language :: Python :: 3.5",
 	],
-        download_url="https://github.com/orionw/tuningDEAP/archive/v0.0.1.tar.gz"
-	keywords="tuning macinelearning genetic hyperparameters",
+        download_url="https://github.com/orionw/tuningDEAP/archive/v0.0.1.tar.gz",
+	keywords="tuning machinelearning genetic hyperparameters",
 	packages=find_packages(),
 	install_requires=["deap", "numpy", "pandas"],
 	python_requires="~=3.5",
