@@ -9,13 +9,13 @@ import collections
 import json
 import numpy as np
 import math
-from functools import reduce
-import operator
 import copy
 import time
 import pickle 
 import pandas as pd
 import logging
+
+from tuningdeap.config_mapping import set_by_path
 
 logger = logging.getLogger(__name__)
 
@@ -270,31 +270,10 @@ class TuningDeap:
             for index, name in enumerate(self.order_of_keys):
                 current_value = chromosome[index]
                 path_to_original = self.map_config[name]
-                self.set_by_path(new_config, path_to_original, current_value, is_bool=name in self.bool_values)
+                set_by_path(new_config, path_to_original, current_value, is_bool=name in self.bool_values)
             return new_config
         else:
             return chromosome
-
-    def get_by_path(self, root: dict, items: typing.List[str]):
-        """
-        Access a nested object in root by item sequence.
-        :param root: the dictionary to access
-        :param items: the list of strings containing the path
-        :return the value of the path
-        """
-        return reduce(operator.getitem, items, root)
-
-    def set_by_path(self, root: dict, items: typing.List[str], value, is_bool: bool = False):
-        """
-        Set a value in a nested object in root by item sequence.
-        :param root: the dictionary to access
-        :param items: the list of strings containing the path
-        :param value: the value to set that path to
-        """
-        if is_bool:
-            self.get_by_path(root, items[:-1])[items[-1]] = bool(value)
-        else:
-            self.get_by_path(root, items[:-1])[items[-1]] = value
 
     def _instatiate_attributes(self):
         """
