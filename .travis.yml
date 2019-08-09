@@ -4,15 +4,12 @@ python:
   - "3.6"
 
 install:
+  - CODECOV_TOKEN="fa9cb0a3-2c26-48c8-9e18-b5abc901e28c"
   - pip install -r requirements.txt > /dev/null
-
-before_script:
-  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-  - chmod +x ./cc-test-reporter
-  - ./cc-test-reporter before-build
+  - pip install codecov
 
 script:
-  - coverage run --source tuningdeap setup.py test
+  - coverage run run_tests.py
 
-after_script:
-  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
+after_success:
+  - codecov
