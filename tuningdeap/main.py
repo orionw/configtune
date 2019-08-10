@@ -5,7 +5,6 @@ from deap import algorithms
 import argparse
 import typing
 import random
-import collections
 import json
 import numpy as np
 import math
@@ -15,7 +14,7 @@ import pickle
 import pandas as pd
 import logging
 
-from tuningdeap.config_mapping import set_by_path
+from tuningdeap.config_mapping import set_by_path, get_paths
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +40,7 @@ class TuningDeap:
 
         if self.output:
             logger.setLevel(logging.INFO)
-        logger.info("Output is set to: {}".format(self.output))
+            logger.info("Output is set to: {}".format(self.output))
 
         if original_config is not None:
             self.original_config: dict = original_config
@@ -54,7 +53,8 @@ class TuningDeap:
         self.evaluate_function: typing.Callable = self.create_evaluate_func()
         self._instatiate_attributes()
 
-        logger.info("Finished initializing.")
+        if self.output:
+            logger.info("Finished initializing.")
 
     def create_evaluate_func(self) -> typing.Callable:
         """
@@ -72,7 +72,7 @@ class TuningDeap:
                 return self.evaluate_outside_function(config)
             except Exception as e:
                 if self.output:
-                    logger.debug("There was an exception evaluating: {}".format(e))
+                    logger.info("There was an exception evaluating: {}".format(e))
                 return tuple((float('inf'), )) if self.minimize else tuple((float("-inf"), ))
         return evaluate_function
 
@@ -126,7 +126,8 @@ class TuningDeap:
                 results.to_csv("{}/generation-{}.csv".format(self.output_path, gen))
                 halloffame.clear()
 
-            topone.update(population)
+            if len(population) != 0:
+                topone.update(population)
             population = self.toolbox.select(population, k=len(population))
 
         if len(topone) == 0:
@@ -224,31 +225,11 @@ class TuningDeap:
             pass
         return alternate
 
-    def get_paths(self, source: dict) -> typing.List[typing.List[str]]:
-        """
-        Returns all paths from a dictionary object to all different keys
-        :param source: the dict object to find paths in
-        :return a list of paths, where each path is a list of keys
-        """
-        paths = []
-        if isinstance(source, collections.MutableMapping):  # found a dict-like structure...
-            for k, v in source.items():  # iterate over it; Python 2.x: source.iteritems()
-                paths.append([k])  # add the current child path
-                paths += [[k] + x for x in self.get_paths(v)]  # get sub-paths, extend with the current
-        # else, check if a list-like structure, remove if you don't want list paths included
-        elif isinstance(source, collections.Sequence) and not isinstance(source, str):
-            #                          Python 2.x: use basestring instead of str ^
-            for i, v in enumerate(source):
-                paths.append([i])
-                paths += [[i] + x for x in self.get_paths(v)]  # get sub-paths, extend with the current
-        return paths
-
-
     def map_tuning_config_to_original(self):
         """
         The function that maps the tuning config and genetic algorithm parameters to the original config for evaluation
         """
-        paths = self.get_paths(self.original_config)
+        paths = get_paths(self.original_config)
         mapping = {}
         for key, value in self.tuning_config["attributes"].items():
             for index, path in enumerate(paths):

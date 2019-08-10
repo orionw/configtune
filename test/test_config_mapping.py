@@ -1,5 +1,5 @@
 import unittest
-from tuningdeap.config_mapping import get_by_path, set_by_path
+from tuningdeap.config_mapping import get_by_path, set_by_path, get_paths
 import json
 import os
 import logging
@@ -35,7 +35,7 @@ class TestConfigMapping(unittest.TestCase):
         value = get_by_path(test_config, path)
         assert value == "three_levels", "did not gather the correct value from the map, expected {} but got {}".format(value, test_value)
 
-    def test_gather_from_map_valid(self):
+    def test_gather_from_map_invalid(self):
         test_value = "three_levels"
         test_config = {
             "a": 1,
@@ -117,6 +117,48 @@ class TestConfigMapping(unittest.TestCase):
         except Exception:
             pass
     
+    def test_get_paths_short(self):
+        expected_output = [
+            ["a"], ["b"], ["c"], ["c", "d"], ["c", "d", "e"]
+        ]
+        test_config = {
+            "a": 1,
+            "b": True,
+            "c": {
+                "d": {
+                    "e": "value"
+                }
+            }
+        }
+        output = get_paths(test_config)
+        assert output == expected_output, "path output was not what was expected, failed"
+
+    def test_get_paths_long(self):
+        expected_output = [
+            ["a"], ["b"], ["c"], ["c", "d"], ["c", "d", "e"], ["c", "d", "e", "f"], ["c", "d", "e", "f", "g"]
+        ]
+        test_config = {
+            "a": 1,
+            "b": True,
+            "c": {
+                "d": {
+                    "e": {
+                        "f": {
+                            "g":  "done!"
+                        }
+                    }
+                }
+            }
+        }
+        output = get_paths(test_config)
+        assert output == expected_output, "path output was not what was expected for the long version, failed"
+
+    def test_get_paths_empty(self):
+        expected_output = []
+        test_config = {}
+        output = get_paths(test_config)
+        assert output == expected_output, "path output was not what was expected for the empty version, failed"
+
     
 
     
