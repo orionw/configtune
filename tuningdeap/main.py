@@ -13,6 +13,7 @@ import time
 import pickle 
 import pandas as pd
 import logging
+import os
 
 from tuningdeap.config_mapping import set_by_path, get_paths
 
@@ -33,12 +34,15 @@ class TuningDeap:
         self.tuning_config: dict = tuning_config
         self.using_config = False
         # define output parameters if given
-        self.output_path = None if "output_path" not in tuning_config else tuning_config["output_path"]
-        self.output = False if self.output_path is None else True
+        self.output_path = "tmp" if "output_path" not in tuning_config else tuning_config["output_path"]
+        self.output = tuning_config["output"] if "output" in tuning_config.keys() else False
 
         self.minimize = True if "minimize" not in tuning_config else tuning_config["minimize"]
 
         if self.output:
+            output_folder = os.path.join(os.getcwd(), self.output_path)
+            if not os.path.isdir(output_folder):
+                os.mkdir(output_folder)
             logger.setLevel(logging.INFO)
             logger.info("Output is set to: {}".format(self.output))
 
@@ -145,21 +149,25 @@ class TuningDeap:
         for individual in init_population:
             invalid = False
             for index, parameter in enumerate(individual):
+                parameter_info = self.tuning_config["attributes"]
                 parameter_name = self.order_of_keys[index]
-                parameter_info = self.tuning_config["attributes"][parameter_name]
-                parameter_bounds = list(parameter_info.values())[0]
-                if list(parameter_info.keys())[0] != "bool":
-                    if parameter_bounds[0] <= parameter <= parameter_bounds[1]:
+                parameter_map = parameter_info[parameter_name]
+                attribute_type = parameter_map["type"]
+                if attribute_type != "bool":
+                    min_val = parameter_map["min"]
+                    max_val = parameter_map["max"]
+                    step_size =  parameter_map["step"] if "step" in parameter_map else 1
+                    if min_val <= parameter <= max_val:
                         try:
                             # see if strict bounds are enforced
-                            if parameter_bounds[4] and self.enforce_steps(parameter, parameter_bounds):
+                            if "strict" in parameter_info and self.enforce_steps(parameter, min_val, max_val, step_size):
                                 continue
                         except IndexError:
                             continue
                     else:
                         if self.output:
                             logger.info("Rejecting float/int parameter for individual: {}={} with bounds: {}".format(parameter_name, parameter,
-                                        " ".join([str(item) for item in parameter_bounds])))
+                                        " ".join([str(item) for item in [min_val, max_val, step_size]])))
                         invalid = True
                         break
                 else:
@@ -173,12 +181,12 @@ class TuningDeap:
                         break
             if not invalid:
                 final_population.append(copy.deepcopy(individual))
-    
+
         if self.output:
             logger.info("The population has a size of {} after rejecting the invalid: should be {}".format(len(final_population), self.population_size))
         return final_population
 
-    def enforce_steps(self, parameter, parameter_bounds: typing.List) -> bool:
+    def enforce_steps(self, parameter, min_val: int, max_val: int, step_size) -> bool:
         # TODO: add the enforcement for this step
         return True
 
@@ -277,20 +285,24 @@ class TuningDeap:
         self.bool_values = []
         self.order_of_keys = []
         # for each attribute given to model, set up the required limits and parameters for the genetic algorithm
-        for attribute_name, attribute in self.tuning_config["attributes"].items():
+        for attribute_name, attribute_map in self.tuning_config["attributes"].items():
+            # gather the needed info
             self.order_of_keys.append(attribute_name)
-            assert len(attribute.keys()) == 1
-            param_type = str(list(attribute.keys())[0])
-            attr_values = list(attribute.values())[0]
+            param_type = attribute_map["type"]
+            if param_type != "bool":
+                min_val = attribute_map["min"]
+                max_val = attribute_map["max"]
+                step_size =  attribute_map["step"] if "step" in attribute_map else 1
+            # create the values in the program
             if param_type == "int":
-                self.toolbox.register("attr_int", random.randrange, attr_values[0], attr_values[1], attr_values[2] if len(attr_values) == 3 else 1)
+                self.toolbox.register("attr_int", random.randrange, min_val, max_val, step_size)
                 chromosome.append(self.toolbox.attr_int)
             if param_type == "bool":
                 self.toolbox.register("attr_bool", random.randint, 0, 1)
                 chromosome.append(self.toolbox.attr_bool)
                 self.bool_values.append(attribute_name)
             if param_type == "float":
-                self.toolbox.register("attr_float", self.rand_with_step, attr_values[0], attr_values[1], attr_values[2])
+                self.toolbox.register("attr_float", self.rand_with_step, min_val, max_val, step_size)
                 chromosome.append(self.toolbox.attr_float)
 
         assert len(chromosome) != 0, "No values were added for the genetic algorithm"

@@ -11,24 +11,36 @@ class TestLogging(unittest.TestCase):
         self.tuning_config = {
                                 "population_size": 1,
                                 "n_generations": 1,
-                                "minimize": True,
                                 "output": True,
+                                "minimize": True,
                                 "attributes": {
-                                    "name1": {"float": [0, 1, 0.1]},
-                                    "name2": {"bool": []},
-                                    "name3": {"int": [1, 5, 1]}
+                                    "name1": {
+                                        "type": "float",
+                                        "min": 0,
+                                        "max": 1,
+                                        "step": 0.1
+                                    },
+                                    "name2": {
+                                        "type": "bool"
+                                    },
+                                    "name3": {
+                                        "type": "int",
+                                        "min": 1,
+                                        "max": 5,
+                                        "step": 1
+                                    }
                                 }
                             }
     # TODO: fix logging test
-    # def test_logs(self):
-    #     with self.assertLogs('tuningdeap.main', level='INFO') as cm:
-    #         # tests that logging works
-    #         def eval_function(chromosomes):
-    #             return tuple(np.sum(np.sqrt(chromosomes)), )
-    #         tune = TuningDeap(eval_function, self.tuning_config)
-    #         best_config, best_score = tune.run_evolutionary()
+    def test_logs(self):
+        with self.assertLogs('tuningdeap.main', level='INFO') as cm:
+            # tests that logging works
+            def eval_function(chromosomes):
+                return tuple(np.sum(np.sqrt(chromosomes)), )
+            tune = TuningDeap(eval_function, self.tuning_config)
+            best_config, best_score = tune.run_evolutionary()
 
-    #     assert len(cm.output) > 0, "Should have output more than zero logs: instead got zero"
+        assert len(cm.output) > 0, "Should have output more than zero logs: instead got zero"
         
     
     def test_no_logs(self):
