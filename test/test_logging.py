@@ -31,7 +31,7 @@ class TestLogging(unittest.TestCase):
                                     }
                                 }
                             }
-    # TODO: fix logging test
+
     def test_logs(self):
         with self.assertLogs('tuningdeap.main', level='INFO') as cm:
             # tests that logging works
