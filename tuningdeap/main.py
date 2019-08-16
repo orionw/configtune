@@ -153,7 +153,8 @@ class TuningDeap:
                 parameter_name = self.order_of_keys[index]
                 parameter_map = parameter_info[parameter_name]
                 attribute_type = parameter_map["type"]
-                if attribute_type != "bool":
+
+                if attribute_type not in ["bool", "categorical"]:
                     min_val = parameter_map["min"]
                     max_val = parameter_map["max"]
                     step_size =  parameter_map["step"] if "step" in parameter_map else 1
@@ -170,7 +171,8 @@ class TuningDeap:
                                         " ".join([str(item) for item in [min_val, max_val, step_size]])))
                         invalid = True
                         break
-                else:
+
+                elif attribute_type == "bool":
                     # handle the boolean case
                     if parameter == 0 or parameter == 1:
                         continue
@@ -179,6 +181,20 @@ class TuningDeap:
                             logger.info("Rejecting boolean parameter for individual: {} with bounds: {}".format(parameter_name, parameter))
                         invalid = True
                         break
+
+                elif attribute_type == "categorical":
+                    values = parameter_map["values"]
+                    if 0 <= parameter <= len(values):
+                        continue
+                    else:
+                        if self.output:
+                            logger.info("Rejecting categorical parameter for individual: {}={} with bounds: 0-{}".format(parameter_name, parameter,
+                                        " ".join(len(values))))
+                        invalid = True
+                        break
+                else:
+                    raise Exception("Wrong type of value for parameter: {}".format(attribute_type))
+
             if not invalid:
                 final_population.append(copy.deepcopy(individual))
 
@@ -259,7 +275,8 @@ class TuningDeap:
             for index, name in enumerate(self.order_of_keys):
                 current_value = chromosome[index]
                 path_to_original = self.map_config[name]
-                set_by_path(new_config, path_to_original, current_value, is_bool=name in self.bool_values)
+                set_by_path(new_config, path_to_original, current_value, is_bool=name in self.bool_values, 
+                            categorical_value=self.categorical_values[name][current_value] if name in self.categorical_values else None)
             return new_config
         else:
             return chromosome
@@ -283,13 +300,14 @@ class TuningDeap:
 
         chromosome = []
         self.bool_values = []
+        self.categorical_values = {}
         self.order_of_keys = []
         # for each attribute given to model, set up the required limits and parameters for the genetic algorithm
         for attribute_name, attribute_map in self.tuning_config["attributes"].items():
             # gather the needed info
             self.order_of_keys.append(attribute_name)
             param_type = attribute_map["type"]
-            if param_type != "bool":
+            if param_type not in ["bool", "categorical"]:
                 min_val = attribute_map["min"]
                 max_val = attribute_map["max"]
                 step_size =  attribute_map["step"] if "step" in attribute_map else 1
@@ -304,6 +322,10 @@ class TuningDeap:
             if param_type == "float":
                 self.toolbox.register("attr_float", self.rand_with_step, min_val, max_val, step_size)
                 chromosome.append(self.toolbox.attr_float)
+            if param_type == "categorical":
+                self.toolbox.register("attr_int", random.randrange, 0, len(attribute_map["values"]), 1)
+                chromosome.append(self.toolbox.attr_int)
+                self.categorical_values[attribute_name] = attribute_map["values"]
 
         assert len(chromosome) != 0, "No values were added for the genetic algorithm"
         # finalize setting up the algorithm by specifying the chromosones, individual makeup, and the population

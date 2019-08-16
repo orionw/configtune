@@ -12,16 +12,21 @@ def get_by_path(root: dict, path_list: typing.List[str]):
     """
     return reduce(operator.getitem, path_list, root)
 
-def set_by_path(dict_object: dict, path_list: typing.List[str], value, is_bool: bool = False):
+def set_by_path(dict_object: dict, path_list: typing.List[str], value, is_bool: bool = False, categorical_value: str = None):
     """
     Set a value in a nested object in root by item sequence.
     :param dict_object: the dictionary to access
     :param path_list: the list of strings containing the path
     :param value: the value to set that path to
+    :param is_bool: whether to map the value back to a boolean
+    :param categorical_value: the value of the category to map back into, None if not categorical
     """
     assert type(dict_object) == dict, "was given wrong item type for dict_object: expected dict got {}".format(type(dict_object))
+    assert not (is_bool and (categorical_value is not None)), "cannot have two types: bool and categorical, for one parameter!"
     if is_bool:
         get_by_path(dict_object, path_list[:-1])[path_list[-1]] = bool(value)
+    elif categorical_value is not None:
+        get_by_path(dict_object, path_list[:-1])[path_list[-1]] = categorical_value
     else:
         get_by_path(dict_object, path_list[:-1])[path_list[-1]] = value
 

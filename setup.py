@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
 	name="tuningdeap",
-	version="0.0.1",
+	version="0.0.3",
 	description="A package to tune Machine Learning hyperparameters with config files",
 	long_description=None,
 	url= "https://github.com/orionw/tuningDEAP",
@@ -12,7 +12,7 @@ setup(
 	classifiers=[
 		"Programming Language :: Python :: 3.5",
 	],
-        download_url="https://github.com/orionw/tuningDEAP/archive/v0.0.1.tar.gz",
+    download_url="https://github.com/orionw/tuningDEAP/archive/v0.0.2.tar.gz",
 	keywords="tuning machinelearning genetic hyperparameters",
 	packages=find_packages(),
 	install_requires=["deap", "numpy", "pandas"],

@@ -29,6 +29,10 @@ class TestMapConfigBack(unittest.TestCase):
                                         "max": 5,
                                         "step": 1
                                     },
+                                    "name4": {
+                                        "type": "categorical",
+                                        "values": ["a", "b", "c"]
+                                    }
                                 }
                             }
 
@@ -38,8 +42,9 @@ class TestMapConfigBack(unittest.TestCase):
         def eval(values):
             return tuple(values[0],)
         tune = TuningDeap(eval, self.tuning_config, self.model_config)
-        config = tune.map_tuning_config_back([1, 0, 1])
+        config = tune.map_tuning_config_back([1, 0, 1, 1])
         assert config.keys() == self.model_config.keys(), "keys were not mapped back correctly"
+        assert config["name4"] == "b", "did not map back the categorical value"
 
     def test_gather_correct_mapping(self):
         with open(os.path.join(os.getcwd(), "test", "real_test_config.json"), "r") as file:

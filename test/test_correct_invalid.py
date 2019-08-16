@@ -29,6 +29,10 @@ class TestEvaluateError(unittest.TestCase):
                                             "min": 1,
                                             "max": 5,
                                             "step": 1
+                                        },
+                                        "name4": {
+                                            "type": "categorical",
+                                            "values": ["a", "b", "c"]
                                         }
                                     }
                                 }

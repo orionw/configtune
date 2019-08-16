@@ -29,6 +29,10 @@ class TestCheckLimits(unittest.TestCase):
                                         "min": 1,
                                         "max": 5,
                                         "step": 1
+                                    },
+                                    "name4": {
+                                        "type": "categorical",
+                                        "values": ["a", "b", "c"]
                                     }
                                 }
                             }
@@ -65,7 +69,6 @@ class TestCheckLimits(unittest.TestCase):
         tune = TuningDeap(eval_function, self.tuning_config)
         init_population = [[0.0, 0, 1], [0.1, 1, 5], [1.0, 0, 1]]
         final_population = tune.enforce_limits(init_population)
-        print(final_population)
         assert len(final_population) == len(init_population), "should have {} inividuals left: instead had {}".format(len(init_population) - 1, 
                                                                     len(final_population))
 

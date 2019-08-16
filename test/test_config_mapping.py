@@ -7,32 +7,6 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 class TestConfigMapping(unittest.TestCase):
-    def setUp(self):
-        cwd = os.getcwd()
-        self.tuning_config = {
-                                        "population_size": 1,
-                                        "n_generations": 1,
-                                        "output": False,
-                                        "minimize": True,
-                                        "attributes": {
-                                            "name1": {
-                                                "type": "float",
-                                                "min": 0,
-                                                "max": 1,
-                                                "step": 0.1
-                                            },
-                                            "name2": {
-                                                "type": "bool"
-                                            },
-                                            "name3": {
-                                                "type": "int",
-                                                "min": 1,
-                                                "max": 5,
-                                                "step": 1
-                                            }
-                                        }
-                                    }
-
     def test_gather_from_map_valid(self):
         test_value = "three_levels"
         test_config = {

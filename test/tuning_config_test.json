@@ -1,7 +1,7 @@
 {
     "population_size": 10,
     "n_generations": 5,
-    "output": false,
+    "output": true,
     "attributes": {
         "name1": {
             "type": "float",
@@ -17,6 +17,10 @@
             "min": 1,
             "max": 5,
             "step": 1
+        },
+        "name4": {
+            "type": "categorical",
+            "values": ["a", "b", "c"]
         }
     }
 }

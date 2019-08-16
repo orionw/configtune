@@ -28,6 +28,10 @@ class TestLogging(unittest.TestCase):
                                         "min": 1,
                                         "max": 5,
                                         "step": 1
+                                    },
+                                    "name4": {
+                                        "type": "categorical",
+                                        "values": ["a", "b", "c"]
                                     }
                                 }
                             }
@@ -36,7 +40,7 @@ class TestLogging(unittest.TestCase):
         with self.assertLogs('tuningdeap.main', level='INFO') as cm:
             # tests that logging works
             def eval_function(chromosomes):
-                return tuple(np.sum(np.sqrt(chromosomes)), )
+                return tuple(np.sum(np.sqrt(chromosomes[:len(chromosomes) - 1])), )
             tune = TuningDeap(eval_function, self.tuning_config)
             best_config, best_score = tune.run_evolutionary()
 
@@ -49,7 +53,7 @@ class TestLogging(unittest.TestCase):
             with self.assertLogs('tuningdeap.main', level='INFO') as cm:
                 # tests that logging works
                 def eval_function(chromosomes):
-                    return tuple(np.sum(np.sqrt(chromosomes)), )
+                    return tuple(np.sum(np.sqrt(chromosomes[:len(chromosomes) - 1])), )
                 tune = TuningDeap(eval_function, self.tuning_config)
                 best_config, best_score = tune.run_evolutionary()
 
