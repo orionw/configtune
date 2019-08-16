@@ -16,20 +16,20 @@ A package for tuning machine learning models genetically, with or without a conf
     "minimize": true,
     "attributes": {
         "generic_param_example: {
-            "type" = <"int"/"float"/"bool">,
+            "type": <"int"/"float"/"bool">,
             "min": <min_value if int or float>,
             "max": <max_value if int or float>,
             <this is an optional param, default=1: "step": <step size value>,
             <this is an optional param to enforce step limits: "strict": <True/False>>
         },
         "int_you_want_to_tune_example": {
-            "type" = "int",
+            "type": "int",
             "min": 1,
             "max": 10,
             "step": 2
         },
         "float_you_want_to_tune_example": {
-            "type" = "int",
+            "type": "int",
             "min": 0,
             "max": 1,
             "step": 0.1
