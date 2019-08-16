@@ -36,11 +36,14 @@ A package for tuning machine learning models genetically, with or without a conf
         },
         "bool_you_want_to_tune_example": {
             "type": "bool"
-        }
+        },
+        "categorical_values_you_want_to_tune_example": {
+        "type": "categorical",
+        "values": ["a", "b", "c"]
     }
 }
 ```
-Boolean values don't need any bounds.  The parameter names should match those found in your model config file, if you have one.
+Boolean values don't need any bounds.  The parameter names should match those found in your model config file, if you have one.  Categorical values will be randomly selected for initialization.
 
 2. Create your evaluation function.  This function needs to take in a config file or a list of values being tuned if you're not using a config.  Your function needs to return a tuple with a score, like so: `tuple(0.1,)`.
 
