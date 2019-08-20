@@ -3,7 +3,7 @@
 [![codecov](https://codecov.io/gh/orionw/tuningDEAP/branch/master/graph/badge.svg)](https://codecov.io/gh/orionw/tuningDEAP)
 
 # TuningDEAP
-A package for tuning machine learning models genetically, with or without a config file. 
+A package for tuning machine learning models genetically, with or without a config file.
 
 ## How to Use:
 0. Create your model and config files (if desired)

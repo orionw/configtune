@@ -3,6 +3,7 @@ import operator
 import typing
 import collections
 
+
 def get_by_path(root: dict, path_list: typing.List[str]):
     """
     Access a nested object in root by item sequence.
