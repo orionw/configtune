@@ -24,12 +24,13 @@ class TuningDeap:
     A class to genetically tune algorithms. Can handle a config file. Wraps the `deap` package.
     """
 
-    def __init__(self, evaluate_outside_function: typing.Callable, tuning_config: dict, original_config: dict = None):
+    def __init__(self, evaluate_outside_function: typing.Callable, tuning_config: dict, original_config: dict = None, minimize: bool = True):
         """
         Sets up the class, creates the config mapper if needed, the evaluate function, and the genetic algorithm parameters
         :param evaluate_outside_function: the function to evaluate for the outside caller
         :param tuning_config: the config for the genetic algorithm
         :param original_config: the original_configuration file, if needed, so that we can evaluate
+        :param minimize: if True, minimize evaluate_outside_function; else maximize it
         """
         self.tuning_config: dict = tuning_config
         self.using_config = False
@@ -37,7 +38,7 @@ class TuningDeap:
         self.output_path = "tmp" if "output_path" not in tuning_config else tuning_config["output_path"]
         self.output = tuning_config["output"] if "output" in tuning_config.keys() else False
 
-        self.minimize = True if "minimize" not in tuning_config else tuning_config["minimize"]
+        self.minimize = minimize
 
         if self.output:
             output_folder = os.path.join(os.getcwd(), self.output_path)
