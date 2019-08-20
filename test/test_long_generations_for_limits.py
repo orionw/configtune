@@ -11,31 +11,30 @@ class TestCheckLimits(unittest.TestCase):
     def setUp(self):
         cwd = os.getcwd()
         self.tuning_config = {
-                                "population_size": 100,
-                                "n_generations": 1000,
-                                "output": False,
-                                "attributes": {
-                                    "name1": {
-                                        "type": "float",
-                                        "min": 0,
-                                        "max": 1,
-                                        "step": 0.1
-                                    },
-                                    "name2": {
-                                        "type": "bool"
-                                    },
-                                    "name3": {
-                                        "type": "int",
-                                        "min": 1,
-                                        "max": 5,
-                                        "step": 1
-                                    },
-                                    "name4": {
-                                        "type": "categorical",
-                                        "values": ["a", "b", "c"]
-                                    }
-                                }
-                            }
+            "population_size": 100,
+            "n_generations": 1000,
+            "attributes": {
+                "name1": {
+                    "type": "float",
+                    "min": 0,
+                    "max": 1,
+                    "step": 0.1
+                },
+                "name2": {
+                    "type": "bool"
+                },
+                "name3": {
+                    "type": "int",
+                    "min": 1,
+                    "max": 5,
+                    "step": 1
+                },
+                "name4": {
+                    "type": "categorical",
+                    "values": ["a", "b", "c"]
+                }
+            }
+        }
 
     def test_long_running(self):
         # this test does not implicitly assert anything but those should be caught in the mutation

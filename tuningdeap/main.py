@@ -24,27 +24,31 @@ class TuningDeap:
     A class to genetically tune algorithms. Can handle a config file. Wraps the `deap` package.
     """
 
-    def __init__(self, evaluate_outside_function: typing.Callable, tuning_config: dict, original_config: dict = None):
+    def __init__(
+        self, evaluate_outside_function: typing.Callable, tuning_config: dict, original_config: dict = None,
+        output_dir: str = None, verbose: bool = False
+    ):
         """
         Sets up the class, creates the config mapper if needed, the evaluate function, and the genetic algorithm parameters
         :param evaluate_outside_function: the function to evaluate for the outside caller
         :param tuning_config: the config for the genetic algorithm
         :param original_config: the original_configuration file, if needed, so that we can evaluate
+        :param output_dir: the location to write the output files
+        :param verbose: whether to report progress to logging while running
         """
         self.tuning_config: dict = tuning_config
         self.using_config = False
-        # define output parameters if given
-        self.output_path = "tmp" if "output_path" not in tuning_config else tuning_config["output_path"]
-        self.output = tuning_config["output"] if "output" in tuning_config.keys() else False
+
+        self.output_dir = output_dir
+        if self.output_dir is not None and not os.path.isdir(self.output_dir):
+            os.mkdir(self.output_dir)
+
+        self.verbose = verbose
+        if self.verbose:
+            logger.setLevel(logging.INFO)
+            logger.info("verbose is set to: {}".format(self.verbose))
 
         self.minimize = True if "minimize" not in tuning_config else tuning_config["minimize"]
-
-        if self.output:
-            output_folder = os.path.join(os.getcwd(), self.output_path)
-            if not os.path.isdir(output_folder):
-                os.mkdir(output_folder)
-            logger.setLevel(logging.INFO)
-            logger.info("Output is set to: {}".format(self.output))
 
         if original_config is not None:
             self.original_config: dict = original_config
@@ -57,7 +61,7 @@ class TuningDeap:
         self.evaluate_function: typing.Callable = self.create_evaluate_func()
         self._instatiate_attributes()
 
-        if self.output:
+        if self.verbose:
             logger.info("Finished initializing.")
 
     def create_evaluate_func(self) -> typing.Callable:
@@ -75,7 +79,7 @@ class TuningDeap:
             try:
                 return self.evaluate_outside_function(config)
             except Exception as e:
-                if self.output:
+                if self.verbose:
                     logger.info("There was an exception evaluating: {}".format(e))
                 return tuple((float('inf'), )) if self.minimize else tuple((float("-inf"), ))
         return evaluate_function
@@ -88,12 +92,13 @@ class TuningDeap:
         population = self.toolbox.population(n=self.population_size)
         hof = tools.HallOfFame(1)
 
-        if self.output:
+        if self.output_dir is not None:
             halloffame = tools.HallOfFame(maxsize=self.population_size)
         topone = tools.HallOfFame(maxsize=1)
 
         for gen in range(0, self.n_generations):
-            print("On generation {}".format(gen))
+            if self.verbose:
+                print("On generation {}".format(gen))
 
             # enforce our own limits on parameters regardless of mutations
             iterations = 0
@@ -112,7 +117,7 @@ class TuningDeap:
             for ind, fit in zip(invalid_ind, fitnesses):
                 ind.fitness.values = fit
 
-            if self.output:
+            if self.output_dir is not None:
                 halloffame.update(population)
                 # it's a list of lists
                 individuals = halloffame.items
@@ -127,7 +132,8 @@ class TuningDeap:
                     full_named_items.append(named_items)
                 # write out to file 
                 results = pd.DataFrame(full_named_items)
-                results.to_csv("{}/generation-{}.csv".format(self.output_path, gen))
+                output_path = os.path.join(self.output_dir, 'generation-{}.csv'.format(gen))
+                results.to_csv(output_path)
                 halloffame.clear()
 
             if len(population) != 0:
@@ -166,7 +172,7 @@ class TuningDeap:
                         except IndexError:
                             continue
                     else:
-                        if self.output:
+                        if self.verbose:
                             logger.info("Rejecting float/int parameter for individual: {}={} with bounds: {}".format(parameter_name, parameter,
                                         " ".join([str(item) for item in [min_val, max_val, step_size]])))
                         invalid = True
@@ -177,7 +183,7 @@ class TuningDeap:
                     if parameter == 0 or parameter == 1:
                         continue
                     else: 
-                        if self.output:
+                        if self.verbose:
                             logger.info("Rejecting boolean parameter for individual: {} with bounds: {}".format(parameter_name, parameter))
                         invalid = True
                         break
@@ -187,7 +193,7 @@ class TuningDeap:
                     if 0 <= parameter <= len(values):
                         continue
                     else:
-                        if self.output:
+                        if self.verbose:
                             logger.info("Rejecting categorical parameter for individual: {}={} with bounds: 0-{}".format(parameter_name, parameter,
                                         " ".join(len(values))))
                         invalid = True
@@ -198,7 +204,7 @@ class TuningDeap:
             if not invalid:
                 final_population.append(copy.deepcopy(individual))
 
-        if self.output:
+        if self.verbose:
             logger.info("The population has a size of {} after rejecting the invalid: should be {}".format(len(final_population), self.population_size))
         return final_population
 
