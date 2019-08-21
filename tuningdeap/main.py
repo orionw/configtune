@@ -38,14 +38,13 @@ class TuningDeap:
         self.output_dir = output_dir
         if self.output_dir is not None and not os.path.isdir(self.output_dir):
             os.mkdir(self.output_dir)
+
         self.minimize = minimize
 
         self.verbose = verbose
         if self.verbose:
             logger.setLevel(logging.INFO)
             logger.info("verbose is set to: {}".format(self.verbose))
-
-        self.minimize = True if "minimize" not in tuning_config else tuning_config["minimize"]
 
         if original_config is not None:
             self.original_config: dict = original_config

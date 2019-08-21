@@ -1,6 +1,7 @@
 import unittest
 from tuningdeap import TuningDeap
 import numpy as np
+import os
 
 
 class TestLogging(unittest.TestCase):
@@ -9,7 +10,6 @@ class TestLogging(unittest.TestCase):
         self.tuning_config = {
             "population_size": 1,
             "n_generations": 1,
-            "minimize": True,
             "attributes": {
                 "name1": {
                     "type": "float",
