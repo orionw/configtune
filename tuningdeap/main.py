@@ -4,6 +4,7 @@ import math
 import os
 import random
 import typing
+import time
 
 from deap import algorithms, base, creator, tools
 import numpy as np
@@ -21,7 +22,7 @@ class TuningDeap:
 
     def __init__(
         self, evaluate_outside_function: typing.Callable, tuning_config: dict, original_config: dict = None,
-        output_dir: str = None, verbose: bool = False, minimize: bool = True
+        output_dir: str = None, verbose: bool = False, minimize: bool = True, timeout: float = float("inf")
     ):
         """
         Sets up the class, creates the config mapper if needed, the evaluate function, and the genetic algorithm parameters
@@ -31,6 +32,7 @@ class TuningDeap:
         :param output_dir: the location to write the output files
         :param verbose: whether to report progress to logging while running
         :param minimize: if True, minimize evaluate_outside_function; else maximize it
+        :param timeout: the time in seconds that tuningDEAP should continue to generate populations
         """
         self.tuning_config: dict = tuning_config
         self.using_config = False
@@ -40,6 +42,7 @@ class TuningDeap:
             os.mkdir(self.output_dir)
 
         self.minimize = minimize
+        self.timeout = timeout
 
         self.verbose = verbose
         if self.verbose:
@@ -92,9 +95,12 @@ class TuningDeap:
             halloffame = tools.HallOfFame(maxsize=self.population_size)
         topone = tools.HallOfFame(maxsize=1)
 
-        for gen in range(0, self.n_generations):
+        ending_time = time.time() + self.timeout
+        self.gen = 0
+        while self.gen < self.n_generations and time.time() < ending_time:
+            self.gen += 1
             if self.verbose:
-                print("On generation {}".format(gen))
+                print("On generation {}".format(self.gen))
 
             # enforce our own limits on parameters regardless of mutations
             iterations = 0
@@ -128,7 +134,7 @@ class TuningDeap:
                     full_named_items.append(named_items)
                 # write out to file
                 results = pd.DataFrame(full_named_items)
-                output_path = os.path.join(self.output_dir, 'generation-{}.csv'.format(gen))
+                output_path = os.path.join(self.output_dir, 'generation-{}.csv'.format(self.gen))
                 results.to_csv(output_path)
                 halloffame.clear()
 
