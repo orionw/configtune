@@ -100,17 +100,10 @@ class TuningDeap:
         while self.gen < self.n_generations and time.time() < ending_time:
             self.gen += 1
             if self.verbose:
-                print("On generation {}".format(self.gen))
+                logger.info("On generation {}".format(self.gen))
 
-            # enforce our own limits on parameters regardless of mutations
-            iterations = 0
-            final_population = []
-            while len(final_population) < int(self.population_size * .8) and iterations < 10:
-                iterations += 1
-                init_population = algorithms.varAnd(population, self.toolbox, cxpb=0.5, mutpb=0.2)
-                final_population += self.enforce_limits(init_population)
-            if iterations == 10 and len(final_population) < int(self.population_size * 0.8):
-                raise EnvironmentError("bounds could not be enforced or population too small")
+            # create and validate new generation
+            final_population = self.get_new_generation(population)
             
             # Evaluate the individuals with an invalid fitness
             population = final_population
@@ -146,6 +139,30 @@ class TuningDeap:
             return [], float("inf") if self.minimize else float("-inf")
 
         return topone.items[0], float(topone.keys[0].wvalues[0] * self.optimize)
+
+    def get_new_generation(self, population: list) -> list:
+        """
+        This function gets the new generation of the population, enforces, and verfies the limits and size
+        :param population: the list of individuals, each a list
+        :return the final population list of lists
+        """
+        # enforce our own limits on parameters regardless of mutations
+        iterations = 0
+        final_population = []
+        while len(final_population) < self.population_size and iterations < 10:
+            iterations += 1
+            init_population = algorithms.varAnd(population, self.toolbox, cxpb=0.5, mutpb=0.2)
+            final_population += self.enforce_limits(init_population)
+            # if too big, scale it down
+            final_population = final_population[:self.population_size]
+        
+        # verify population
+        small_population = len(final_population) < self.population_size
+        if iterations == 10 and small_population:
+            raise EnvironmentError("bounds could not be enforced or population too small")
+        assert small_population == False, "population was smaller than it should have been"
+        assert len(population) == len(final_population), "populations are not the same size. Expected {} but got {}".format(len(population), len(final_population))
+        return final_population
 
     def enforce_limits(self, init_population: typing.List[typing.List]) -> typing.List[typing.List]:
         """
@@ -207,7 +224,7 @@ class TuningDeap:
                 final_population.append(copy.deepcopy(individual))
 
         if self.verbose:
-            logger.info("Enforcing limits for populatin. Have {} after rejecting the invalid: population_size is {}".format(len(final_population), self.population_size))
+            logger.info("Enforcing limits for the population. Have {} after rejecting the invalid: population_size is {}".format(len(final_population), self.population_size))
         return final_population
 
     def enforce_steps(self, parameter, min_val: int, max_val: int, step_size) -> bool:
