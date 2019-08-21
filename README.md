@@ -3,7 +3,7 @@
 [![codecov](https://codecov.io/gh/orionw/tuningDEAP/branch/master/graph/badge.svg)](https://codecov.io/gh/orionw/tuningDEAP)
 
 # TuningDEAP
-A package for tuning machine learning models genetically, with or without a config file. 
+A package for tuning machine learning models genetically, with or without a config file.
 
 ## How to Use:
 0. Create your model and config files (if desired)
@@ -13,7 +13,6 @@ A package for tuning machine learning models genetically, with or without a conf
     "population_size": <int>,
     "n_generations": <int>,
     "output_path": <str>,
-    "minimize": true,
     "attributes": {
         "generic_param_example: {
             "type": <"int"/"float"/"bool">,
@@ -54,6 +53,6 @@ from tuningdeap import TuningDeap
 def eval_function(config_file):
     return your_eval_function(config_file)
 
-tune = TuningDeap(eval_function, tuning_config, model_config)
+tune = TuningDeap(eval_function, tuning_config, model_config, minimize=True)
 best_config, best_score = tune.run_evolutionary()
 ```

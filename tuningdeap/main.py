@@ -1,35 +1,31 @@
-from deap import base
-from deap import creator
-from deap import tools
-from deap import algorithms
-import argparse
-import typing
-import random
-import json
-import numpy as np
-import math
 import copy
-import time
-import pickle 
-import pandas as pd
 import logging
+import math
 import os
+import random
+import typing
+
+from deap import algorithms, base, creator, tools
+import numpy as np
+import pandas as pd
 
 from tuningdeap.config_mapping import set_by_path, get_paths
 
 logger = logging.getLogger(__name__)
+
 
 class TuningDeap:
     """
     A class to genetically tune algorithms. Can handle a config file. Wraps the `deap` package.
     """
 
-    def __init__(self, evaluate_outside_function: typing.Callable, tuning_config: dict, original_config: dict = None):
+    def __init__(self, evaluate_outside_function: typing.Callable, tuning_config: dict, original_config: dict = None, minimize: bool = True):
         """
         Sets up the class, creates the config mapper if needed, the evaluate function, and the genetic algorithm parameters
         :param evaluate_outside_function: the function to evaluate for the outside caller
         :param tuning_config: the config for the genetic algorithm
         :param original_config: the original_configuration file, if needed, so that we can evaluate
+        :param minimize: if True, minimize evaluate_outside_function; else maximize it
         """
         self.tuning_config: dict = tuning_config
         self.using_config = False
@@ -37,7 +33,7 @@ class TuningDeap:
         self.output_path = "tmp" if "output_path" not in tuning_config else tuning_config["output_path"]
         self.output = tuning_config["output"] if "output" in tuning_config.keys() else False
 
-        self.minimize = True if "minimize" not in tuning_config else tuning_config["minimize"]
+        self.minimize = minimize
 
         if self.output:
             output_folder = os.path.join(os.getcwd(), self.output_path)
@@ -62,7 +58,7 @@ class TuningDeap:
 
     def create_evaluate_func(self) -> typing.Callable:
         """
-        The function to create the function used by the genetic algorithm. 
+        The function to create the function used by the genetic algorithm.
         We have to wrap the evaluation function with another function to change the chromosomes into a dict like the `original_config` file.
         """
         def evaluate_function(values: typing.List) -> typing.Tuple:
@@ -125,7 +121,7 @@ class TuningDeap:
                         named_items[name] =  item
                     named_items["score"] = halloffame.keys[list_num].wvalues[0] * self.optimize
                     full_named_items.append(named_items)
-                # write out to file 
+                # write out to file
                 results = pd.DataFrame(full_named_items)
                 results.to_csv("{}/generation-{}.csv".format(self.output_path, gen))
                 halloffame.clear()
@@ -140,7 +136,7 @@ class TuningDeap:
         return topone.items[0], float(topone.keys[0].wvalues[0] * self.optimize)
 
     def enforce_limits(self, init_population: typing.List[typing.List]) -> typing.List[typing.List]:
-        """ 
+        """
         Enforces the given limits on the mutated/crossovered population since deap does not.
         :param init_population: a list of lists containing `inividual's chromosomes`
         :return a list of lists representing the valid members of the population
@@ -176,7 +172,7 @@ class TuningDeap:
                     # handle the boolean case
                     if parameter == 0 or parameter == 1:
                         continue
-                    else: 
+                    else:
                         if self.output:
                             logger.info("Rejecting boolean parameter for individual: {} with bounds: {}".format(parameter_name, parameter))
                         invalid = True
@@ -244,7 +240,7 @@ class TuningDeap:
         :return the function to be used
         """
         if key in self.tuning_config:
-            # do something 
+            # do something
             # TODO: make this dynamicly change based on input
             pass
         return alternate
@@ -275,7 +271,7 @@ class TuningDeap:
             for index, name in enumerate(self.order_of_keys):
                 current_value = chromosome[index]
                 path_to_original = self.map_config[name]
-                set_by_path(new_config, path_to_original, current_value, is_bool=name in self.bool_values, 
+                set_by_path(new_config, path_to_original, current_value, is_bool=name in self.bool_values,
                             categorical_value=self.categorical_values[name][current_value] if name in self.categorical_values else None)
             return new_config
         else:
@@ -331,4 +327,3 @@ class TuningDeap:
         # finalize setting up the algorithm by specifying the chromosones, individual makeup, and the population
         self.toolbox.register("individual", tools.initCycle, creator.Individual, chromosome, n=1)
         self.toolbox.register("population", tools.initRepeat, list, self.toolbox.individual)
-

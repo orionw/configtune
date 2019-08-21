@@ -1,12 +1,11 @@
 import unittest
 from tuningdeap.config_mapping import get_by_path, set_by_path, get_paths
-import json
-import os
 import logging
 
 logging.basicConfig(level=logging.INFO)
 
 class TestConfigMapping(unittest.TestCase):
+
     def test_gather_from_map_valid(self):
         test_value = "three_levels"
         test_config = {
@@ -64,7 +63,7 @@ class TestConfigMapping(unittest.TestCase):
             self.fail("Should not allow a string to be passed in as the dict_object")
         except Exception:
             pass
-    
+
     def test_set_from_map_valid_bool(self):
         test_value = True
         new_value = 0
@@ -103,7 +102,7 @@ class TestConfigMapping(unittest.TestCase):
             self.fail("Should not have been able to set value with incorrect path/key combo")
         except Exception:
             pass
-    
+
     def test_get_paths_short(self):
         expected_output = [
             ["a"], ["b"], ["c"], ["c", "d"], ["c", "d", "e"]
@@ -145,9 +144,3 @@ class TestConfigMapping(unittest.TestCase):
         test_config = {}
         output = get_paths(test_config)
         assert output == expected_output, "path output was not what was expected for the empty version, failed"
-
-    
-
-    
-
-    
