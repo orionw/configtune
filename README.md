@@ -12,7 +12,6 @@ A package for tuning machine learning models genetically, with or without a conf
 {
     "population_size": <int>,
     "n_generations": <int>,
-    "output_path": <str>,
     "attributes": {
         "generic_param_example: {
             "type": <"int"/"float"/"bool">,
