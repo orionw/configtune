@@ -1,15 +1,11 @@
 import unittest
 from tuningdeap import TuningDeap
-import json
-import os
-import logging
 import numpy as np
 
 
 class TestLogging(unittest.TestCase):
 
     def setUp(self):
-        cwd = os.getcwd()
         self.tuning_config = {
             "population_size": 1,
             "n_generations": 1,
@@ -44,24 +40,24 @@ class TestLogging(unittest.TestCase):
     def test_logs(self):
         with self.assertLogs('tuningdeap.main', level='INFO') as cm:
             # tests that logging works
-            tune = TuningDeap(self._eval_function, self.tuning_config, verbose=True)
+            tune = TuningDeap(self._eval_function, self.tuning_config, verbose=True, minimize=True)
             best_config, best_score = tune.run_evolutionary()
 
         assert len(cm.output) > 0, "Should have output more than zero logs: instead got zero"
-        
-    
+
+
     def test_no_logs(self):
         try:
             with self.assertLogs('tuningdeap.main', level='INFO') as cm:
                 # tests that logging works
-                tune = TuningDeap(self._eval_function, self.tuning_config, verbose=False)
+                tune = TuningDeap(self._eval_function, self.tuning_config, verbose=False, minimize=True)
                 best_config, best_score = tune.run_evolutionary()
 
         except Exception:
             pass
 
     def test_output_dir(self):
-        tune = TuningDeap(self._eval_function, self.tuning_config, output_dir='./tmp', verbose=False)
+        tune = TuningDeap(self._eval_function, self.tuning_config, output_dir='./tmp', verbose=False, minimize=True)
         best_config, best_score = tune.run_evolutionary()
         self.assertTrue(os.path.isfile('./tmp/generation-0.csv'))
 

@@ -21,8 +21,3 @@ class TestConfig(unittest.TestCase):
         tune = TuningDeap(eval_function, self.tuning_config, self.model_config)
         best_config, best_score = tune.run_evolutionary()
         assert type(best_score) == float, "wrong type was returned, expected float was {}".format(type(best_score))
-    
-
-    
-
-    
