@@ -103,9 +103,9 @@ class TuningDeap:
                 iterations += 1
                 init_population = algorithms.varAnd(population, self.toolbox, cxpb=0.5, mutpb=0.2)
                 final_population += self.enforce_limits(init_population)
-            if iterations == 10:
-                logger.info("Population spend more than 10 tries of generation due to bounds.")
-
+            if iterations == 10 and len(final_population) < int(self.population_size * 0.8):
+                raise EnvironmentError("bounds could not be enforced or population too small")
+            
             # Evaluate the individuals with an invalid fitness
             population = final_population
             invalid_ind = [ind for ind in population if not ind.fitness.valid]
@@ -201,7 +201,7 @@ class TuningDeap:
                 final_population.append(copy.deepcopy(individual))
 
         if self.verbose:
-            logger.info("The population has a size of {} after rejecting the invalid: should be {}".format(len(final_population), self.population_size))
+            logger.info("Enforcing limits for populatin. Have {} after rejecting the invalid: population_size is {}".format(len(final_population), self.population_size))
         return final_population
 
     def enforce_steps(self, parameter, min_val: int, max_val: int, step_size) -> bool:

@@ -16,8 +16,8 @@ class TestConfig(unittest.TestCase):
             self.model_config = json.load(file)
 
     def test_basic_config(self):
-        def eval_function(real_config_updated, n_values):
-            return DummyModel().predict(real_config_updated, n_values)
+        def eval_function(real_config_updated):
+            return DummyModel().predict(real_config_updated)
         tune = TuningDeap(eval_function, self.tuning_config, self.model_config)
         best_config, best_score = tune.run_evolutionary()
         assert type(best_score) == float, "wrong type was returned, expected float was {}".format(type(best_score))
