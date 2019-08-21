@@ -10,7 +10,6 @@ class TestEvaluateError(unittest.TestCase):
         self.tuning_config = {
             "population_size": 1,
             "n_generations": 1,
-            "output": False,
             "attributes": {
                 "name1": {
                     "type": "float",

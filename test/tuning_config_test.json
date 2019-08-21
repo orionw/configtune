@@ -1,7 +1,6 @@
 {
     "population_size": 10,
     "n_generations": 5,
-    "output": true,
     "attributes": {
         "name1": {
             "type": "float",
