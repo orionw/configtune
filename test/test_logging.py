@@ -59,7 +59,7 @@ class TestLogging(unittest.TestCase):
     def test_output_dir(self):
         tune = TuningDeap(self._eval_function, self.tuning_config, output_dir='./tmp', verbose=False, minimize=True)
         best_config, best_score = tune.run_evolutionary()
-        self.assertTrue(os.path.isfile('./tmp/generation-0.csv'))
+        self.assertTrue(os.path.isfile('./tmp/generation-1.csv'))
 
     
     
