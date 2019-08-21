@@ -53,6 +53,6 @@ from tuningdeap import TuningDeap
 def eval_function(config_file):
     return your_eval_function(config_file)
 
-tune = TuningDeap(eval_function, tuning_config, model_config, minimize=True)
+tune = TuningDeap(eval_function, tuning_config, model_config, minimize=True, output_dir="/tmp")
 best_config, best_score = tune.run_evolutionary()
 ```
