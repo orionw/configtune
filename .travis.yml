@@ -9,6 +9,7 @@ install:
   - pip install codecov
   - pip install coverage
   - pip install torch
+  - pip install sklearn
 
 script:
   - coverage run run_tests.py
