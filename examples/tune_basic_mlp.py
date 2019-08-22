@@ -42,7 +42,6 @@ def fit(config, train_loader):
             loss = loss_fn(outputs, labels)
             loss.backward()
             optimizer.step()
-            train_losses.append(loss.item())
 
     return model
 
@@ -116,6 +115,7 @@ def execute_example():
             return score,
         except Exception as e:
             print("Failed because of {}".format(e))
+            raise(e)
 
     # now we tune
     tune = TuningDeap(accuracy_function, tuning_config, model_config, minimize=False, verbose=True)
