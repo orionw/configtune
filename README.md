@@ -12,7 +12,6 @@ A package for tuning machine learning models genetically, with or without a conf
 {
     "population_size": <int>,
     "n_generations": <int>,
-    "output_path": <str>,
     "attributes": {
         "generic_param_example: {
             "type": <"int"/"float"/"bool">,
@@ -53,6 +52,6 @@ from tuningdeap import TuningDeap
 def eval_function(config_file):
     return your_eval_function(config_file)
 
-tune = TuningDeap(eval_function, tuning_config, model_config, minimize=True)
+tune = TuningDeap(eval_function, tuning_config, model_config, minimize=True, output_dir="/tmp")
 best_config, best_score = tune.run_evolutionary()
 ```
