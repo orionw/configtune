@@ -100,7 +100,7 @@ class TuningDeap:
         while self.gen < self.n_generations and time.time() < ending_time:
             self.gen += 1
             if self.verbose:
-                logger.info("On generation {}".format(self.gen))
+                print("On generation {}".format(self.gen))
 
             # create and validate new generation
             final_population = self.get_new_generation(population)
