@@ -22,7 +22,8 @@ class TuningDeap:
 
     def __init__(
         self, evaluate_outside_function: typing.Callable, tuning_config: dict, original_config: dict = None,
-        output_dir: str = None, verbose: bool = False, minimize: bool = True, timeout: float = float("inf")
+        output_dir: str = None, verbose: bool = False, minimize: bool = True, timeout: float = float("inf"),
+        n_generations: int = None, population_size: int = None, init_population_path: str = None, random_seed: int = None
     ):
         """
         Sets up the class, creates the config mapper if needed, the evaluate function, and the genetic algorithm parameters
@@ -33,6 +34,10 @@ class TuningDeap:
         :param verbose: whether to report progress to logging while running
         :param minimize: if True, minimize evaluate_outside_function; else maximize it
         :param timeout: the time in seconds that tuningDEAP should continue to generate populations
+        :param n_generations: the number of generations to tune
+        :param population_size: the number of individuals to evaluate each generation
+        :param init_population_path: the string path to a csv file containing previous tuned values and scores
+        :param random_seed: set the random seed for deap
         """
         self.tuning_config: dict = tuning_config
         self.using_config = False
@@ -43,6 +48,13 @@ class TuningDeap:
 
         self.minimize = minimize
         self.timeout = timeout
+        self.population_size = population_size
+        self.n_generations = n_generations
+        self.init_population_path = init_population_path
+
+        if random_seed is not None:
+            self.random_seed = random_seed
+            random.seed(random_seed)
 
         self.verbose = verbose
         if self.verbose:
@@ -91,6 +103,9 @@ class TuningDeap:
         population = self.toolbox.population(n=self.population_size)
         hof = tools.HallOfFame(1)
 
+        if self.init_population_path is not None:
+            population = self.create_population_from_csv(population)
+
         if self.output_dir is not None:
             halloffame = tools.HallOfFame(maxsize=self.population_size)
         topone = tools.HallOfFame(maxsize=1)
@@ -102,7 +117,7 @@ class TuningDeap:
             if self.verbose:
                 print("On generation {}".format(self.gen))
 
-            # create and validate new generation
+            # create and validate new generation by geneticism
             final_population = self.get_new_generation(population)
             
             # Evaluate the individuals with an invalid fitness
@@ -129,6 +144,8 @@ class TuningDeap:
                 results = pd.DataFrame(full_named_items)
                 output_path = os.path.join(self.output_dir, 'generation-{}.csv'.format(self.gen))
                 results.to_csv(output_path)
+                print("The results from generation {} are:".format(self.gen))
+                print(results)
                 halloffame.clear()
 
             if len(population) != 0:
@@ -231,13 +248,17 @@ class TuningDeap:
         # TODO: add the enforcement for this step
         return True
 
-
     def validate_config(self):
         """
         Used to validate essential config properties
         """
-        assert "population_size" in self.tuning_config, "Tuning config did not have population size!"
-        assert "n_generations" in self.tuning_config, "Tuning config did not have n_generations!"
+        if self.population_size is None:
+            assert "population_size" in self.tuning_config, "Tuning config did not have population size!"
+            self.population_size = self.tuning_config["population_size"]
+        
+        if self.n_generations is None:
+            assert "n_generations" in self.tuning_config, "Tuning config did not have n_generations!"
+            self.n_generations = self.tuning_config["n_generations"]
 
     def rand_with_step(self, low: float, high: float, step: float, count: int = 1, bias: bool = True):
         """
@@ -310,9 +331,6 @@ class TuningDeap:
         """
         This function sets the necessary class values and creates the layout for the genetic algorithm
         """
-        self.population_size: int = self.tuning_config["population_size"]
-        self.n_generations: int = self.tuning_config["n_generations"]
-
         # set up the general genetic algorithm functions
         self.toolbox.register("evaluate", self.evaluate_function)
         self.toolbox.register("mate", self.getConfigOr("mate", tools.cxTwoPoint))
@@ -356,3 +374,26 @@ class TuningDeap:
         # finalize setting up the algorithm by specifying the chromosones, individual makeup, and the population
         self.toolbox.register("individual", tools.initCycle, creator.Individual, chromosome, n=1)
         self.toolbox.register("population", tools.initRepeat, list, self.toolbox.individual)
+
+    def create_population_from_csv(self, init_population: typing.List[typing.List]):
+        """
+        This function is used to "warm-start" or initialize a population from previous values
+        :param init_population: the deap generated list of individuals
+        :return the init_population that has been populated by the csv file
+        """
+        if not os.path.isfile(self.init_population_path):
+            raise ValueError("path to initial population: {}, was not a valid file or did not exist".format(self.init_population_path))
+
+        previous_population = pd.read_csv(self.init_population_path, header=0, index_col=False)
+        assert set(previous_population.columns.tolist()) == set(self.order_of_keys + ["score"]), "given csv file did not contain the same parameters as the tuning config"
+
+        # get the best given if more than population_size given
+        previous_population.sort_values(by=["score"])
+        starting_population = previous_population.iloc[:self.population_size, ].to_numpy().tolist()
+
+        # fill in any missing inidivduals from the randomly created population
+        if len(starting_population) < self.population_size:
+            starting_population += init_population[:self.population_size - len(starting_population)]
+
+        assert len(starting_population) == self.population_size, "could not create a population size of {}".format(self.population_size)
+        return starting_population
