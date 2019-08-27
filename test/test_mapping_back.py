@@ -38,9 +38,9 @@ class TestMapConfigBack(unittest.TestCase):
     def test_gather_from_map_valid(self):
         with open(os.path.join(os.getcwd(), "test", "real_test_config.json"), "r") as file:
             self.model_config = json.load(file)
-        def eval(values):
-            return tuple(values[0],)
-        tune = TuningDeap(eval, self.tuning_config, self.model_config, minimize=True)
+        def eval_func(values):
+            return (values[0],)
+        tune = TuningDeap(eval_func, self.tuning_config, self.model_config, minimize=True)
         config = tune.map_tuning_config_back([1, 0, 1, 1])
         assert config.keys() == self.model_config.keys(), "keys were not mapped back correctly"
         assert config["name4"] == "b", "did not map back the categorical value"
@@ -48,9 +48,9 @@ class TestMapConfigBack(unittest.TestCase):
     def test_gather_correct_mapping(self):
         with open(os.path.join(os.getcwd(), "test", "real_test_config.json"), "r") as file:
             self.model_config = json.load(file)
-        def eval(values):
-            return tuple(values[0],)
-        tune = TuningDeap(eval, self.tuning_config, self.model_config, minimize=True)
+        def eval_func(values):
+            return (values[0],)
+        tune = TuningDeap(eval_func, self.tuning_config, self.model_config, minimize=True)
         config = tune.map_tuning_config_to_original()
         for key, value in config.items():
             assert key == value[0], "config mapping did not map correctly. Expected {} but got {}".format(key, value[0])

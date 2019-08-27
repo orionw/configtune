@@ -38,7 +38,7 @@ class TestTiming(unittest.TestCase):
 
     def test_zero_second_one_generation(self):
         def eval_function(chromosomes):
-            return tuple(1, )
+            return (1, )
         # small value to make sure it runs close to one generation only
         timeout_time = 0.001
         tune = TuningDeap(eval_function, self.tuning_config, verbose=False, timeout=timeout_time)
@@ -49,7 +49,7 @@ class TestTiming(unittest.TestCase):
     
     def test_completed_epochs_inf_time(self):
         def eval_function(chromosomes):
-            return tuple(1, )
+            return (1, )
         self.tuning_config["n_generations"] = 5
         tune = TuningDeap(eval_function, self.tuning_config, verbose=False, timeout=float("inf"))
         start_time = time.time()
@@ -58,7 +58,7 @@ class TestTiming(unittest.TestCase):
 
     def test_time_longer_generations(self):
         def eval_function(chromosomes):
-            return tuple(1, )
+            return (1, )
         timeout_time = 15
         tune = TuningDeap(eval_function, self.tuning_config, verbose=False, timeout=timeout_time)
         start_time = time.time()

@@ -131,6 +131,8 @@ class TuningDeap:
                 halloffame.update(population)
                 # it's a list of lists
                 individuals = halloffame.items
+                # reverse halloffame items since they did it reverse
+                individuals.reverse()
                 # get the names of the parameters for ease of reading
                 full_named_items = []
                 for list_num, ind_params in enumerate(individuals):
@@ -138,6 +140,7 @@ class TuningDeap:
                     for index, item in enumerate(ind_params):
                         name = self.order_of_keys[index]
                         named_items[name] =  item
+                    # flip the sign if we need to
                     named_items["score"] = halloffame.keys[list_num].wvalues[0] * self.optimize
                     full_named_items.append(named_items)
                 # write out to file

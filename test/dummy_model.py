@@ -11,7 +11,7 @@ class DummyModel:
         :return the scores as a tuple
         """
         value = real_config_updated["name1"] * real_config_updated["name3"] if real_config_updated["name2"] else 0
-        return tuple((value, ))
+        return (value, )
 
     def predict_no_config(self, values: typing.List) -> typing.Tuple[int]:
         """
