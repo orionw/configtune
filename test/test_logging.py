@@ -35,7 +35,7 @@ class TestLogging(unittest.TestCase):
 
     @staticmethod
     def _eval_function(chromosomes):
-        return tuple(np.sum(np.sqrt(chromosomes[:len(chromosomes) - 1])), )
+        return (np.sum(np.sqrt(chromosomes[:len(chromosomes) - 1])), )
 
     def test_logs(self):
         with self.assertLogs('tuningdeap.main', level='INFO') as cm:

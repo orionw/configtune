@@ -38,7 +38,7 @@ class TestCheckLimits(unittest.TestCase):
     def test_long_running(self):
         # this test does not implicitly assert anything but those should be caught in the mutation
         def eval_function(chromosomes):
-            return tuple(np.sqrt(chromosomes), )
+            return (np.sum(np.sqrt(chromosomes[:len(chromosomes) - 1])), )
         tune = TuningDeap(eval_function, self.tuning_config, verbose=False)
         best_config, best_score = tune.run_evolutionary()
 
