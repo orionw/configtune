@@ -47,7 +47,7 @@ class TuningDeap(TuningBase):
 
         self.validate_config()
         self.toolbox = base.Toolbox()
-        self._instatiate_attributes()
+        self._instantiate_attributes()
 
         if self.verbose:
             logger.info("Finished initializing.")
@@ -153,7 +153,7 @@ class TuningDeap(TuningBase):
             pass
         return alternate
 
-    def _instatiate_attributes(self):
+    def _instantiate_attributes(self):
         """
         This function sets the necessary class values and creates the layout for the genetic algorithm
         """
