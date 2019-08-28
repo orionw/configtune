@@ -39,7 +39,7 @@ class TestPopulationSize(unittest.TestCase):
         def eval_function(chromosomes):
             return (1, )
         # run and see if it hits the assertion for too small of a population
-        tune = TuningDeap(eval_function, self.tuning_config, n_generations=10, population_size=100000)
+        tune = TuningDeap(eval_function, self.tuning_config, n_generations=10, population_size=10000)
         _, _ = tune.run_evolutionary()
 
     def test_population_output_mixup(self):

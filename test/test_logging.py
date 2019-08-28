@@ -38,7 +38,7 @@ class TestLogging(unittest.TestCase):
         return (np.sum(np.sqrt(chromosomes[:len(chromosomes) - 1])), )
 
     def test_logs(self):
-        with self.assertLogs('tuningdeap.main', level='INFO') as cm:
+        with self.assertLogs('tuningdeap.base_tuner', level='INFO') as cm:
             # tests that logging works
             tune = TuningDeap(self._eval_function, self.tuning_config, verbose=True, minimize=True)
             best_config, best_score = tune.run_evolutionary()
@@ -48,7 +48,7 @@ class TestLogging(unittest.TestCase):
 
     def test_no_logs(self):
         try:
-            with self.assertLogs('tuningdeap.main', level='INFO') as cm:
+            with self.assertLogs('tuningdeap.base_tuner', level='INFO') as cm:
                 # tests that logging works
                 tune = TuningDeap(self._eval_function, self.tuning_config, verbose=False, minimize=True)
                 best_config, best_score = tune.run_evolutionary()

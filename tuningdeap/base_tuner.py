@@ -48,9 +48,9 @@ class TuningBase:
         self.minimize = minimize
         self.timeout = timeout
        
-        if random_seed is not None:
-            self.random_seed = random_seed
-            random.seed(random_seed)
+        self.random_seed = random_seed
+        if self.random_seed is not None:
+            random.seed(self.random_seed)
 
         self.verbose = verbose
         if self.verbose:
