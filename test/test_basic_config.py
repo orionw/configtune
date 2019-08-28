@@ -4,6 +4,7 @@ from tuningdeap import TuningDeap, TuningBayes
 import json
 import os
 import logging
+import numpy as np
 
 logging.basicConfig(level=logging.INFO)
 
@@ -19,13 +20,13 @@ class TestConfig(unittest.TestCase):
         def eval_function(real_config_updated):
             return DummyModel().predict(real_config_updated)
         tune = TuningDeap(eval_function, self.tuning_config, self.model_config)
-        best_config, best_score = tune.run_evolutionary()
+        best_config, best_score = tune.run()
         assert type(best_score) == float, "wrong type was returned, expected float was {}".format(type(best_score))
 
 
     def test_basic_config_bayes(self):
         def eval_function(real_config_updated):
-            return DummyModel().predict(real_config_updated)
-        tune = TuningBayes(eval_function, self.tuning_config, self.model_config)
+            return DummyModel().predict(real_config_updated)[0]
+        tune = TuningBayes(eval_function, self.tuning_config, self.model_config, verbose=True, n_calls=2)
         best_config, best_score = tune.run()
-        assert type(best_score) == float, "wrong type was returned, expected float was {}".format(type(best_score))
+        assert type(best_score) == np.float64, "wrong type was returned, expected float was {}".format(type(best_score))

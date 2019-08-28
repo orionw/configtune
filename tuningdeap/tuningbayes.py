@@ -55,8 +55,11 @@ class TuningBayes(TuningBase):
             logger.info("Finished initializing.")
 
     def run(self):
-        import pdb; pdb.set_trace()
-        res_gp = gp_minimize(self.evaluate_function, self.space, n_calls=self.n_calls, random_state=self.random_seed, n_random_starts=self.n_random_starts)
+        res_gp = gp_minimize(self.evaluate_function, self.space, n_calls=self.n_calls, random_state=self.random_seed, 
+                             n_random_starts=self.n_random_starts, verbose=self.verbose)
+        if self.verbose or self.output_dir is not None:
+            self.create_dataset_from_results(res_gp.x_iters, res_gp.func_vals, self.output_dir is not None, self.verbose, prefix="bayes")
+
         return res_gp.x, res_gp.fun
  
     def validate_config(self):
@@ -87,7 +90,7 @@ class TuningBayes(TuningBase):
             if param_type == "float":
                 space.append(Real(min_val, max_val, name=attribute_name))
             if param_type == "categorical":
-                space.append(Integer(0, len(attribute_map["values"]), name=attribute_name))
+                space.append(Integer(0, len(attribute_map["values"]) - 1, name=attribute_name))
                 self.categorical_values[attribute_name] = attribute_map["values"]
 
         assert len(space) != 0, "No values were added for the bayesian optimization"

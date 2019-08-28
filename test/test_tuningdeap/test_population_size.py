@@ -40,7 +40,7 @@ class TestPopulationSize(unittest.TestCase):
             return (1, )
         # run and see if it hits the assertion for too small of a population
         tune = TuningDeap(eval_function, self.tuning_config, n_generations=10, population_size=10000)
-        _, _ = tune.run_evolutionary()
+        _, _ = tune.run()
 
     def test_population_output_mixup(self):
         print("Checking population params")
@@ -49,7 +49,7 @@ class TestPopulationSize(unittest.TestCase):
 
         n_generations = 10
         tune = TuningDeap(eval_function, self.tuning_config, minimize=False, output_dir="./tmp", n_generations=n_generations)
-        _, _ = tune.run_evolutionary()
+        _, _ = tune.run()
         # check the generations
         for generations in range(n_generations):
             gen = pd.read_csv("./tmp/generation-{}.csv".format(generations + 1), header=0, index_col=0)

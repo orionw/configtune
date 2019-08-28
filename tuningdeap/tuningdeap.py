@@ -52,7 +52,7 @@ class TuningDeap(TuningBase):
         if self.verbose:
             logger.info("Finished initializing.")
 
-    def run_evolutionary(self) -> (typing.List, float):
+    def run(self) -> (typing.List, float):
         """
         The main function to run the evoluationary algorithm
         """
@@ -89,22 +89,10 @@ class TuningDeap(TuningBase):
                 individuals = halloffame.items
                 # reverse halloffame items since they did it reverse
                 individuals.reverse()
-                # get the names of the parameters for ease of reading
-                full_named_items = []
-                for list_num, ind_params in enumerate(individuals):
-                    named_items = {}
-                    for index, item in enumerate(ind_params):
-                        name = self.order_of_keys[index]
-                        named_items[name] =  item
-                    # flip the sign if we need to
-                    named_items["score"] = halloffame.keys[list_num].wvalues[0] * self.optimize
-                    full_named_items.append(named_items)
-                # write out to file
-                results = pd.DataFrame(full_named_items)
-                output_path = os.path.join(self.output_dir, 'generation-{}.csv'.format(self.gen))
-                results.to_csv(output_path)
-                print("The results from generation {} are:".format(self.gen))
-                print(results)
+                scores = [item.wvalues[0] * self.optimize for item in halloffame.keys]
+                if self.verbose:
+                    print("The results from generation {} are:".format(self.gen))
+                self.create_dataset_from_results(individuals, scores, self.output_dir is not None, self.verbose, prefix="generation-{}".format(self.gen))
                 halloffame.clear()
 
             if len(population) != 0:

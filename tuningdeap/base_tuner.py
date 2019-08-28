@@ -206,3 +206,33 @@ class TuningBase:
             return new_config
         else:
             return chromosome
+
+    def create_dataset_from_results(self, params: typing.List[typing.List], scores: typing.List[float], output_to_file: bool = False, 
+                                    verbose: bool = False, prefix="bayes"):
+        """
+        This function is abstracted away to gather the info needed to write the results to file.  It will gather the correct names, scores and 
+        deal with outputting or printing them depending on the config
+        :param params: the parameters for that hyperparameter run
+        :param scores: the scores for each parameter run
+        :param output_to_file: a boolean indicating whether or not to write to file
+        :param verbose: a boolean indicating whether or not to print the results
+        :param prefix: the prefix for the file to be written
+        """
+        assert len(params) == len(scores), "scores and params were different lengths! params: {}, scores: {}".format(len(params), len(scores))
+        full_named_items = []
+        for ind_index, ind_params in enumerate(params):
+            named_items = {}
+            # get the named parameters
+            for index, item in enumerate(ind_params):
+                name = self.order_of_keys[index]
+                named_items[name] =  item
+            # flip the sign if we need to
+            named_items["score"] = scores[ind_index]
+            full_named_items.append(named_items)
+        # write out to file
+        results = pd.DataFrame(full_named_items)
+        if output_to_file:
+            output_path = os.path.join(self.output_dir, '{}.csv'.format(prefix))
+            results.to_csv(output_path)
+        if verbose:
+            print(results)
