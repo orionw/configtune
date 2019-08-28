@@ -43,7 +43,7 @@ class TestTiming(unittest.TestCase):
         timeout_time = 0.001
         tune = TuningDeap(eval_function, self.tuning_config, verbose=False, timeout=timeout_time)
         start_time = time.time()
-        _, _ = tune.run_evolutionary()
+        _, _ = tune.run()
         assert abs((time.time() - start_time) - timeout_time) < 1, "timeout took longer than 1 second +- 1 second"
         assert abs(tune.gen - 1) < 3, "tuning ran {} generations when it should have run one".format(tune.gen)
     
@@ -53,7 +53,7 @@ class TestTiming(unittest.TestCase):
         self.tuning_config["n_generations"] = 5
         tune = TuningDeap(eval_function, self.tuning_config, verbose=False, timeout=float("inf"))
         start_time = time.time()
-        _, _ = tune.run_evolutionary()
+        _, _ = tune.run()
         assert tune.gen == 5, "tuning ran {} generations when it should have run 5".format(tune.gen)
 
     def test_time_longer_generations(self):
@@ -62,5 +62,5 @@ class TestTiming(unittest.TestCase):
         timeout_time = 15
         tune = TuningDeap(eval_function, self.tuning_config, verbose=False, timeout=timeout_time)
         start_time = time.time()
-        _, _ = tune.run_evolutionary()
+        _, _ = tune.run()
         assert abs((time.time() - start_time) - timeout_time) < 1, "timeout took longer than 30 seconds +- 1 second"

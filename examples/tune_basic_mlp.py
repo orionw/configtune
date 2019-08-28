@@ -67,7 +67,7 @@ def make_loader(X, y, batch_size=10, shuffle=False, num_workers=1):
     return loader
 
 
-def execute_example():
+def execute_example_deap():
      # prepare dataset/dataloaders
     iris = pd.read_csv(os.path.join("examples", "example_data", "iris.csv"), header=0)
     train, validate = train_test_split(iris, test_size=0.33, random_state=42)
@@ -119,9 +119,9 @@ def execute_example():
 
     # now we tune
     tune = TuningDeap(accuracy_function, tuning_config, model_config, minimize=False, verbose=True)
-    params, score = tune.run_evolutionary()
+    params, score = tune.run()
     print("The best scores was {} with parameters: {}".format(score, ' '.join([str(x) for x in params])))
 
 
 if __name__ == "__main__":
-    execute_example()
+    execute_example_deap()

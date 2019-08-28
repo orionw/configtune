@@ -10,15 +10,13 @@ A package for tuning machine learning models genetically, with or without a conf
 1. Create your tuning config in the format as follows (json):
 ```
 {
-    "population_size": <int>,
-    "n_generations": <int>,
     "attributes": {
         "generic_param_example: {
             "type": <"int"/"float"/"bool">,
             "min": <min_value if int or float>,
             "max": <max_value if int or float>,
-            <this is an optional param, default=1: "step": <step size value>,
-            <this is an optional param to enforce step limits: "strict": <True/False>>
+            <this is an optional param for tuningdeap but NOT tuningbayes, default=1: "step": <step size value>,
+            <this is an optional param to enforce step limits (for tuningdeap but NOT tuningbayes): "strict": <True/False>>
         },
         "int_you_want_to_tune_example": {
             "type": "int",
@@ -36,22 +34,35 @@ A package for tuning machine learning models genetically, with or without a conf
             "type": "bool"
         },
         "categorical_values_you_want_to_tune_example": {
-        "type": "categorical",
-        "values": ["a", "b", "c"]
+            "type": "categorical",
+            "values": ["a", "b", "c"]
     }
 }
 ```
 Boolean values don't need any bounds.  The parameter names should match those found in your model config file, if you have one.  Categorical values will be randomly selected for initialization.
 
-2. Create your evaluation function.  This function needs to take in a config file or a list of values being tuned if you're not using a config.  Your function needs to return a tuple with a score, like so: `tuple(0.1,)`.
+2. Create your evaluation function.  This function needs to take in a config file or a list of values being tuned if you're not using a config.  Your function needs to return a tuple with a score if you're using `TuningDeap`, like so: `tuple(0.1,)`. `TuningBayes` expects a scalar value.
 
-Example overall usage:
+Example overall usage of `TuningDeap`:
 ```
 from tuningdeap import TuningDeap
 
 def eval_function(config_file):
     return your_eval_function(config_file)
 
-tune = TuningDeap(eval_function, tuning_config, model_config, minimize=True, output_dir="/tmp")
-best_config, best_score = tune.run_evolutionary()
+tune = TuningDeap(eval_function, tuning_config, model_config, n_generation=5, population_size=10, 
+                  minimize=True, output_dir="/tmp", verbose=False)
+best_config, best_score = tune.run()
+```
+
+Example overall usage of `TuningBayes`:
+```
+from tuningdeap import TuningBayes
+
+def eval_function(config_file):
+    return your_eval_function(config_file)
+
+tune = TuningBayes(eval_function, tuning_config, model_config, n_calls=10, n_random_starts=2, 
+                   output_dir="/tmp", verbose=True)
+best_config, best_score = tune.run()
 ```

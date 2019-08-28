@@ -40,7 +40,7 @@ class TestCheckLimits(unittest.TestCase):
         def eval_function(chromosomes):
             return (np.sum(np.sqrt(chromosomes[:len(chromosomes) - 1])), )
         tune = TuningDeap(eval_function, self.tuning_config, verbose=False)
-        best_config, best_score = tune.run_evolutionary()
+        best_config, best_score = tune.run()
 
     def test_enforce_limits_no_population_left(self):
         def eval_function(chromosomes):
