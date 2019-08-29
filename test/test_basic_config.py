@@ -21,12 +21,12 @@ class TestConfig(unittest.TestCase):
             return DummyModel().predict(real_config_updated)
         tune = TuningDeap(eval_function, self.tuning_config, self.model_config)
         best_config, best_score = tune.run()
-        assert type(best_score) == float, "wrong type was returned, expected float was {}".format(type(best_score))
+        assert type(best_score) in [float, int], "wrong type was returned, expected float was {}".format(type(best_score))
 
 
     def test_basic_config_bayes(self):
         def eval_function(real_config_updated):
-            return DummyModel().predict(real_config_updated)[0]
+            return DummyModel().predict(real_config_updated)
         tune = TuningBayes(eval_function, self.tuning_config, self.model_config, verbose=True, n_calls=2)
         best_config, best_score = tune.run()
         assert type(best_score) == np.float64, "wrong type was returned, expected float was {}".format(type(best_score))

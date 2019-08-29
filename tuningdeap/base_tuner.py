@@ -9,6 +9,7 @@ import time
 from deap import algorithms, base, creator, tools
 import numpy as np
 import pandas as pd
+import warnings
 
 from tuningdeap.config_mapping import set_by_path, get_paths
 
@@ -21,7 +22,7 @@ class TuningBase:
     """
 
     def __init__(
-        self, evaluate_outside_function: typing.Callable, tuning_config: dict, original_config: dict = None,
+        self, evaluate_outside_function: typing.Callable, tuning_config: dict, original_config: dict = None, warm_start_path: str = None,
         output_dir: str = None, verbose: bool = False, minimize: bool = True, timeout: float = float("inf"), random_seed: int = None
     ):
         """
@@ -35,11 +36,12 @@ class TuningBase:
         :param timeout: the time in seconds that tuningDEAP should continue to generate populations
         :param n_generations: the number of generations to tune
         :param population_size: the number of individuals to evaluate each generation
-        :param init_population_path: the string path to a csv file containing previous tuned values and scores
+        :param warm_start_path: the string path to a csv file containing previous tuned values and scores
         :param random_seed: set the random seed for deap
         """
         self.tuning_config: dict = tuning_config
         self.using_config = False
+        self.warm_start_path = warm_start_path
 
         self.output_dir = output_dir
         if self.output_dir is not None and not os.path.isdir(self.output_dir):
@@ -68,22 +70,21 @@ class TuningBase:
 
     def create_evaluate_func(self) -> typing.Callable:
         """
-        The function to create the function used by the genetic algorithm.
-        We have to wrap the evaluation function with another function to change the chromosomes into a dict like the `original_config` file.
+        The function to create the function used by the tuning algorithm.
+        We have to wrap the evaluation function with another function to change the parameters into a dict like the `original_config` file.
         """
-        def evaluate_function(values: typing.List) -> typing.Tuple:
+        def evaluate_function(values: typing.List) -> float:
             """
             Simply map the chromosome values into a dict like the original config file and return that to the evaluate function
             :param values: the "chromosone" or parameter for this "individual"
-            :return a tuple containing the score of fitness
+            :return a scalar containing the score
             """
             config = self.map_tuning_config_back(values)
             try:
                 return self.evaluate_outside_function(config)
             except Exception as e:
-                if self.verbose:
-                    logger.info("There was an exception evaluating: {}".format(e))
-                return tuple((float('inf'), )) if self.minimize else tuple((float("-inf"), ))
+                raise Exception("there was an error while evaluating the function: {}".format(e))
+                return float('inf') if self.minimize else float("-inf")
         return evaluate_function
 
     def enforce_limits(self, init_population: typing.List[typing.List]) -> typing.List[typing.List]:
@@ -217,6 +218,7 @@ class TuningBase:
         :param output_to_file: a boolean indicating whether or not to write to file
         :param verbose: a boolean indicating whether or not to print the results
         :param prefix: the prefix for the file to be written
+        :return the results in a csv format with columns "score" and the names of the parameters
         """
         assert len(params) == len(scores), "scores and params were different lengths! params: {}, scores: {}".format(len(params), len(scores))
         full_named_items = []
@@ -236,3 +238,18 @@ class TuningBase:
             results.to_csv(output_path)
         if verbose:
             print(results)
+
+        return results
+
+    def read_and_validate_previous(self, path):
+        """
+        A common function for warm starting the tuning.  Takes in a csv filepath and returns the validated DataFrame
+        :param path: a str containing the path to the warm start csv file
+        :return a Pandas DataFrame of the warm start
+        """
+        if not os.path.isfile(path):
+            raise ValueError("path to initial warm start: {}, was not a valid file or did not exist".format(self.warm_start_path))
+
+        warm_start = pd.read_csv(path, header=0, index_col=False)
+        assert set(warm_start.columns.tolist()) == set(self.order_of_keys + ["score"]), "given csv file did not contain the same parameters as the tuning config"
+        return warm_start

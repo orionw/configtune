@@ -3,7 +3,7 @@
 [![codecov](https://codecov.io/gh/orionw/tuningDEAP/branch/master/graph/badge.svg)](https://codecov.io/gh/orionw/tuningDEAP)
 
 # TuningDEAP
-A package for tuning machine learning models genetically, with or without a config file.
+A package for tuning machine learning models (bayesian or genetic tuning), with or without a config file.
 
 ## How to Use:
 0. Create your model and config files (if desired)
@@ -41,7 +41,7 @@ A package for tuning machine learning models genetically, with or without a conf
 ```
 Boolean values don't need any bounds.  The parameter names should match those found in your model config file, if you have one.  Categorical values will be randomly selected for initialization.
 
-2. Create your evaluation function.  This function needs to take in a config file or a list of values being tuned if you're not using a config.  Your function needs to return a tuple with a score if you're using `TuningDeap`, like so: `tuple(0.1,)`. `TuningBayes` expects a scalar value.
+2. Create your evaluation function.  This function needs to take in a config file or a list of values being tuned if you're not using a config.  It should output a scalar value.
 
 Example overall usage of `TuningDeap`:
 ```

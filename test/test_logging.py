@@ -35,10 +35,6 @@ class TestLogging(unittest.TestCase):
 
     @staticmethod
     def _eval_function(chromosomes):
-        return (np.sum(np.sqrt(chromosomes[:len(chromosomes) - 1])), )
-
-    @staticmethod
-    def _eval_function_bayes(chromosomes):
         return np.sum(np.sqrt(chromosomes[:len(chromosomes) - 1]))
 
     def test_logs_deap(self):
@@ -52,7 +48,7 @@ class TestLogging(unittest.TestCase):
     def test_logs_bayes(self):
         with self.assertLogs('tuningdeap.base_tuner', level='INFO') as cm:
             # tests that logging works
-            tune = TuningBayes(self._eval_function_bayes, self.tuning_config, verbose=True)
+            tune = TuningBayes(self._eval_function, self.tuning_config, verbose=True, n_calls=2)
             best_config, best_score = tune.run()
 
         assert len(cm.output) > 0, "Should have output more than zero logs: instead got zero"
@@ -71,7 +67,7 @@ class TestLogging(unittest.TestCase):
         try:
             with self.assertLogs('tuningdeap.base_tuner', level='INFO') as cm:
                 # tests that logging works
-                tune = TuningBayes(self._eval_function_bayes, self.tuning_config, verbose=True)
+                tune = TuningBayes(self._eval_function, self.tuning_config, verbose=True, n_calls=2)
             best_config, best_score = tune.run()
 
         except Exception:
@@ -83,7 +79,7 @@ class TestLogging(unittest.TestCase):
         self.assertTrue(os.path.isfile('./tmp/generation-1.csv'))
 
     def test_output_dir_bayes(self):
-        tune = TuningBayes(self._eval_function_bayes, self.tuning_config, output_dir='./tmp', verbose=False, minimize=True)
+        tune = TuningBayes(self._eval_function, self.tuning_config, output_dir='./tmp', verbose=False, minimize=True, n_calls=2)
         best_config, best_score = tune.run()
         self.assertTrue(os.path.isfile('./tmp/bayes.csv'))
 

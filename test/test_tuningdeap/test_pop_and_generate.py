@@ -36,14 +36,14 @@ class TestTiming(unittest.TestCase):
 
     def test_population_and_generations_from_config(self):
         def eval_function(chromosomes):
-            return (1, )
+            return 1
         tune = TuningDeap(eval_function, self.tuning_config, verbose=False)
         assert tune.n_generations == self.tuning_config["n_generations"], "did not read n_generations from the config file like it should have"
         assert tune.population_size == self.tuning_config["population_size"], "did not read n_generations from the config file like it should have"
     
     def test_population_and_generations_from_constructor(self):
         def eval_function(chromosomes):
-            return (1, )
+            return 1
         n_generations = 10
         population_size = 10
         tune = TuningDeap(eval_function, self.tuning_config, verbose=False, population_size=population_size, n_generations=n_generations)
