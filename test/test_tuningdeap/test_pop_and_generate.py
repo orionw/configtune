@@ -1,5 +1,5 @@
 import unittest
-from tuningdeap import TuningDeap
+from configtune import TuningDeap
 import logging
 
 logging.basicConfig(level=logging.INFO)

@@ -15,8 +15,8 @@ A package for tuning machine learning models (bayesian or genetic tuning), with 
             "type": <"int"/"float"/"bool">,
             "min": <min_value if int or float>,
             "max": <max_value if int or float>,
-            <this is an optional param for tuningdeap but NOT tuningbayes, default=1: "step": <step size value>,
-            <this is an optional param to enforce step limits (for tuningdeap but NOT tuningbayes): "strict": <True/False>>
+            <this is an optional param for configtune but NOT tuningbayes, default=1: "step": <step size value>,
+            <this is an optional param to enforce step limits (for configtune but NOT tuningbayes): "strict": <True/False>>
         },
         "int_you_want_to_tune_example": {
             "type": "int",
@@ -45,7 +45,7 @@ Boolean values don't need any bounds.  The parameter names should match those fo
 
 Example overall usage of `TuningDeap`:
 ```
-from tuningdeap import TuningDeap
+from configtune import TuningDeap
 
 def eval_function(config_file):
     return your_eval_function(config_file)
@@ -57,7 +57,7 @@ best_config, best_score = tune.run()
 
 Example overall usage of `TuningBayes`:
 ```
-from tuningdeap import TuningBayes
+from configtune import TuningBayes
 
 def eval_function(config_file):
     return your_eval_function(config_file)

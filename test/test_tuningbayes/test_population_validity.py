@@ -1,5 +1,5 @@
 import unittest
-from tuningdeap import TuningBayes
+from configtune import TuningBayes
 import json
 import logging
 import numpy as np

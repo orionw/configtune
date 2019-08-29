@@ -11,8 +11,8 @@ import numpy as np
 import pandas as pd
 import warnings
 
-from tuningdeap.base_tuner import TuningBase
-from tuningdeap.config_mapping import set_by_path, get_paths
+from configtune.base_tuner import TuningBase
+from configtune.config_mapping import set_by_path, get_paths
 
 logger = logging.getLogger(__name__)
 

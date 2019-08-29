@@ -1,5 +1,5 @@
 import unittest
-from tuningdeap.config_mapping import get_by_path, set_by_path, get_paths
+from configtune.config_mapping import get_by_path, set_by_path, get_paths
 import logging
 
 logging.basicConfig(level=logging.INFO)

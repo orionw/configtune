@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from sklearn.model_selection import train_test_split
-from tuningdeap import TuningDeap, TuningBayes
+from configtune import TuningDeap, TuningBayes
 import pandas as pd
 from torch.utils.data import DataLoader, TensorDataset
 from torch import Tensor
