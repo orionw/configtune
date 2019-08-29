@@ -1,2 +1,2 @@
-from configtune.configtune import TuningDeap
+from configtune.tuningdeap import TuningDeap
 from configtune.tuningbayes import TuningBayes
