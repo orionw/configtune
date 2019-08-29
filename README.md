@@ -1,8 +1,8 @@
 [![Build Status](https://travis-ci.com/orionw/tuningDEAP.svg?branch=master)](https://travis-ci.com/orionw/tuningDEAP)
-[![PyPI version](https://badge.fury.io/py/tuningdeap.svg)](https://badge.fury.io/py/tuningdeap)
+[![PyPI version](https://badge.fury.io/py/configtune.svg)](https://badge.fury.io/py/configtune)
 [![codecov](https://codecov.io/gh/orionw/tuningDEAP/branch/master/graph/badge.svg)](https://codecov.io/gh/orionw/tuningDEAP)
 
-# TuningDEAP
+# configtune
 A package for tuning machine learning models (bayesian or genetic tuning), with or without a config file.
 
 ## How to Use:
