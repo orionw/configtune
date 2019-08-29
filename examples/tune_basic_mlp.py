@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from sklearn.model_selection import train_test_split
-from tuningdeap import TuningDeap
+from tuningdeap import TuningDeap, TuningBayes
 import pandas as pd
 from torch.utils.data import DataLoader, TensorDataset
 from torch import Tensor
@@ -67,7 +67,7 @@ def make_loader(X, y, batch_size=10, shuffle=False, num_workers=1):
     return loader
 
 
-def execute_example_deap():
+def execute_example_tuning():
      # prepare dataset/dataloaders
     iris = pd.read_csv(os.path.join("examples", "example_data", "iris.csv"), header=0)
     train, validate = train_test_split(iris, test_size=0.33, random_state=42)
@@ -80,8 +80,6 @@ def execute_example_deap():
 
     # define configs
     tuning_config = {
-        "population_size": 5,
-        "n_generations": 10,
         "attributes": {
             "hidden_units": {
                     "type": "int",
@@ -112,16 +110,22 @@ def execute_example_deap():
         try:
             model = fit(config, train_loader)
             score = evaluate(model, validate_loader)
-            return score,
+            return score
         except Exception as e:
             print("Failed because of {}".format(e))
             raise(e)
 
-    # now we tune
-    tune = TuningDeap(accuracy_function, tuning_config, model_config, minimize=False, verbose=True)
+    # now we tune gentically
+    tune = TuningDeap(accuracy_function, tuning_config, model_config, minimize=False, verbose=True, population_size=10, n_generations=5)
     params, score = tune.run()
-    print("The best scores was {} with parameters: {}".format(score, ' '.join([str(x) for x in params])))
+    print("The best scores with TuningDeap was {} with parameters: {}".format(score, ' '.join([str(x) for x in params])))
 
+    # bayesian optimization can only do mins
+    def loss_function(config: dict):
+        return 1 - accuracy_function(config)
+    tune_bayes = TuningBayes(loss_function, tuning_config, model_config, minimize=True, n_calls=50, verbose=True)
+    params, score = tune_bayes.run()
+    print("The best scores with TuningBayes was {} with parameters: {}".format(score, ' '.join([str(x) for x in params])))
 
 if __name__ == "__main__":
-    execute_example_deap()
+    execute_example_tuning()
