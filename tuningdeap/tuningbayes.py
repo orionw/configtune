@@ -27,7 +27,8 @@ class TuningBayes(TuningBase):
     def __init__(
         self, evaluate_outside_function: typing.Callable, tuning_config: dict, original_config: dict = None,
         output_dir: str = None, verbose: bool = False, minimize: bool = True, timeout: float = float("inf"),
-        n_calls: int = None, n_random_starts: int = 1, random_seed: int = None, warm_start_path: str = None
+        n_calls: int = None, n_random_starts: int = 1, random_seed: int = None, jobs: int = None, 
+        n_points: int = None, warm_start_path: str = None
     ):
         """
         Sets up the class, creates the config mapper if needed, the evaluate function, and the genetic algorithm parameters
@@ -41,12 +42,18 @@ class TuningBayes(TuningBase):
         :param n_calls: the number of calls to make
         :param n_random_starts: the number of times to randomly start
         :param random_seed: set the random seed
-        :param warm_start_path: the path to a csv file containing warm starts
+        :param jobs: the number of threads to run
+        :param n_points: the number of points to run simultaneously
+        :param warm_start_path: the path to a csv to warm start with
         """
-        super().__init__(evaluate_outside_function, tuning_config, original_config, output_dir, verbose, minimize, timeout, random_seed)
-        self.n_calls = n_calls
+        super().__init__(evaluate_outside_function, tuning_config, original_config, output_dir=output_dir, verbose=verbose, minimize=minimize, timeout=timeout, 
+                        random_seed=random_seed, warm_start_path=warm_start_path)
         self.n_random_starts = n_random_starts
-        self.warm_start_path = warm_start_path
+        self.n_points = n_points
+        self.jobs = jobs
+        self.n_calls = n_calls
+        if self.n_calls == 0:
+            warnings.warn("TuningBayes called with 0 calls.  No calls will be made")
 
         if not self.minimize:
             raise Exception("Bayesian Optimization does not support maximization. Please use tuningdeap or reformat the problem.")
@@ -62,32 +69,22 @@ class TuningBayes(TuningBase):
     def run(self):
         config_values = []
         scores = []
+        args, no_warm_start_args = self.prepare_args()
         if self.timeout != float("inf"):
             start_time = time.time()
             # do the first so we can plug the values back in and do one iteration each time
-            res_gp = gp_minimize(self.evaluate_function, self.space, n_calls=1, random_state=self.random_seed, 
-                                    n_random_starts=self.n_random_starts, verbose=self.verbose)
+            res_gp = gp_minimize(self.evaluate_function, self.space, n_calls=1, random_state=self.random_seed, verbose=self.verbose, **args)
             while time.time() < start_time + self.timeout:
                 # this may add some overhead by re-creation, but is the easiest way to do a timed tuning
-                res_gp = gp_minimize(self.evaluate_function, self.space, n_calls=1, random_state=self.random_seed, 
-                                n_random_starts=self.n_random_starts, verbose=self.verbose, 
-                                x0=res_gp.x_iters, y0=res_gp.func_vals)
+                res_gp = gp_minimize(self.evaluate_function, self.space, n_calls=1, random_state=self.random_seed, verbose=self.verbose, 
+                                x0=res_gp.x_iters, y0=res_gp.func_vals, **no_warm_start_args)
             
             if self.verbose or self.output_dir is not None:
                 self.create_dataset_from_results(res_gp.x_iters, res_gp.func_vals, self.output_dir is not None, self.verbose, prefix="bayes")
 
 
         else:
-            if self.warm_start_path is not None:
-                warm_start = read_and_validate_previous(self.warm_start_path)
-                scores = results["score"].tolist()
-                config_values = results.drop("score", axis=1).to_numpy().tolist()
-                res_gp = gp_minimize(self.evaluate_function, self.space, n_calls=self.n_calls, random_state=self.random_seed, 
-                                    n_random_starts=self.n_random_starts, verbose=self.verbose,
-                                    x0=config_values, y0=scores)
-            else:
-                res_gp = gp_minimize(self.evaluate_function, self.space, n_calls=self.n_calls, random_state=self.random_seed, 
-                                    n_random_starts=self.n_random_starts, verbose=self.verbose)
+            res_gp = gp_minimize(self.evaluate_function, self.space, n_calls=self.n_calls, random_state=self.random_seed, verbose=self.verbose, **args)
 
             if self.verbose or self.output_dir is not None:
                 self.create_dataset_from_results(res_gp.x_iters, res_gp.func_vals, self.output_dir is not None, self.verbose, prefix="bayes")
@@ -135,3 +132,36 @@ class TuningBayes(TuningBase):
 
         assert len(space) != 0, "No values were added for the bayesian optimization"
         return space
+
+    def prepare_args(self):
+        """
+        Used to prepare the arguments needed from the bayesian tuner
+        :returns a dict representing the function parameters and values, an identical one not containing warm start values
+        """
+        args = {}
+        if self.jobs is not None:
+            args["jobs"] = self.jobs
+        if self.n_points is not None:
+            args["n_points"] = self.n_points
+        if self.n_random_starts is not None:
+            args["n_random_starts"] = self.n_random_starts
+        if self.warm_start_path is not None:
+            scores, config_values = self.init_warm_start()
+            warm_start_args = args.copy()
+            warm_start_args["x0"] = config_values
+            warm_start_args["y0"] = scores
+        else:
+            warm_start_args = args
+        return warm_start_args, args
+
+    def init_warm_start(self):
+        """
+        Used for validating and preparing previous runs for a warm start
+        :returns 
+            scores: the scores from the previous warm start
+            config_values: the parameters that generated those scores
+        """
+        warm_start = self.read_and_validate_previous(self.warm_start_path)
+        scores = warm_start["score"].tolist()
+        config_values = warm_start.drop("score", axis=1).to_numpy().tolist()
+        return scores, config_values

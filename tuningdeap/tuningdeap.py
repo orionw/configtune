@@ -9,6 +9,7 @@ import time
 from deap import algorithms, base, creator, tools
 import numpy as np
 import pandas as pd
+import warnings
 
 from tuningdeap.base_tuner import TuningBase
 from tuningdeap.config_mapping import set_by_path, get_paths
@@ -24,7 +25,7 @@ class TuningDeap(TuningBase):
     def __init__(
         self, evaluate_outside_function: typing.Callable, tuning_config: dict, original_config: dict = None,
         output_dir: str = None, verbose: bool = False, minimize: bool = True, timeout: float = float("inf"),
-        n_generations: int = None, population_size: int = None, init_population_path: str = None, random_seed: int = None
+        n_generations: int = None, population_size: int = None, random_seed: int = None, warm_start_path: str = None
     ):
         """
         Sets up the class, creates the config mapper if needed, the evaluate function, and the genetic algorithm parameters
@@ -37,13 +38,16 @@ class TuningDeap(TuningBase):
         :param timeout: the time in seconds that tuningDEAP should continue to generate populations
         :param n_generations: the number of generations to tune
         :param population_size: the number of individuals to evaluate each generation
-        :param init_population_path: the string path to a csv file containing previous tuned values and scores
         :param random_seed: set the random seed for deap
+        :param warm_start_path: the path to a csv to warm start with
         """
-        super().__init__(evaluate_outside_function, tuning_config, original_config, output_dir, verbose, minimize, timeout, random_seed)
+        super().__init__(evaluate_outside_function, tuning_config, original_config, output_dir=output_dir, verbose=verbose, minimize=minimize, timeout=timeout, 
+                        random_seed=random_seed, warm_start_path=warm_start_path)
         self.population_size = population_size
         self.n_generations = n_generations
-        self.init_population_path = init_population_path
+
+        # override the base class and add the tuple that deap needs
+        self.evaluate_function = self.create_evaluate_func_deap()
 
         self.validate_config()
         self.toolbox = base.Toolbox()
@@ -52,6 +56,25 @@ class TuningDeap(TuningBase):
         if self.verbose:
             logger.info("Finished initializing.")
 
+    def create_evaluate_func_deap(self) -> typing.Callable:
+        """
+        The function to create the function used by the genetic algorithm.
+        We have to wrap the evaluation function with another function to change the chromosomes into a dict like the `original_config` file.
+        """
+        def evaluate_function(values: typing.List) -> typing.Tuple:
+            """
+            Simply map the chromosome values into a dict like the original config file and return that to the evaluate function
+            :param values: the "chromosone" or parameter for this "individual"
+            :return a tuple containing the score of fitness
+            """
+            config = self.map_tuning_config_back(values)
+            try:
+                return (self.evaluate_outside_function(config), )
+            except Exception as e:
+                warnings.warn("there was an error while evaluating the function: {}".format(e))
+                return tuple((float('inf'), )) if self.minimize else tuple((float("-inf"), ))
+        return evaluate_function
+
     def run(self) -> (typing.List, float):
         """
         The main function to run the evoluationary algorithm
@@ -59,7 +82,7 @@ class TuningDeap(TuningBase):
         population = self.toolbox.population(n=self.population_size)
         hof = tools.HallOfFame(1)
 
-        if self.init_population_path is not None:
+        if self.warm_start_path is not None:
             population = self.create_population_from_csv(population)
 
         if self.output_dir is not None:
@@ -102,7 +125,7 @@ class TuningDeap(TuningBase):
         if len(topone) == 0:
             return [], float("inf") if self.minimize else float("-inf")
 
-        return topone.items[0], float(topone.keys[0].wvalues[0] * self.optimize)
+        return topone.items[0], topone.keys[0].wvalues[0] * self.optimize
 
     def get_new_generation(self, population: list) -> list:
         """
@@ -207,7 +230,7 @@ class TuningDeap(TuningBase):
         :param init_population: the deap generated list of individuals
         :return the init_population that has been populated by the csv file
         """
-        previous_population = self.read_and_validate_previous(self.init_population_path)
+        previous_population = self.read_and_validate_previous(self.warm_start_path)
 
         # get the best given if more than population_size given
         previous_population.sort_values(by=["score"])
