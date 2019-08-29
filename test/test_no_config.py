@@ -1,6 +1,6 @@
 import unittest
 from test.dummy_model import DummyModel
-from tuningdeap import TuningDeap, TuningBayes
+from configtune import TuningDeap, TuningBayes
 import json
 import os
 import logging

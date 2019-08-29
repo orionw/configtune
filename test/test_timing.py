@@ -1,5 +1,5 @@
 import unittest
-from tuningdeap import TuningDeap, TuningBayes
+from configtune import TuningDeap, TuningBayes
 import logging
 import numpy as np
 import time

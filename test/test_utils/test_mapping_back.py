@@ -1,5 +1,5 @@
 import unittest
-from tuningdeap import TuningDeap
+from configtune import TuningDeap
 import json
 import os
 import logging

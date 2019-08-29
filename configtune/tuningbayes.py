@@ -10,8 +10,8 @@ import typing
 import time
 import warnings
 
-from tuningdeap.base_tuner import TuningBase
-from tuningdeap.config_mapping import set_by_path, get_paths
+from configtune.base_tuner import TuningBase
+from configtune.config_mapping import set_by_path, get_paths
 
 from skopt.space import Real, Integer
 from skopt.utils import use_named_args
@@ -56,7 +56,7 @@ class TuningBayes(TuningBase):
             warnings.warn("TuningBayes called with 0 calls.  No calls will be made")
 
         if not self.minimize:
-            raise Exception("Bayesian Optimization does not support maximization. Please use tuningdeap or reformat the problem.")
+            raise Exception("Bayesian Optimization does not support maximization. Please use configtune or reformat the problem.")
 
         self.validate_config()
         self.space = self._instantiate_space()
