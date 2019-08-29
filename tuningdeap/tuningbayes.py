@@ -27,7 +27,7 @@ class TuningBayes(TuningBase):
     def __init__(
         self, evaluate_outside_function: typing.Callable, tuning_config: dict, original_config: dict = None,
         output_dir: str = None, verbose: bool = False, minimize: bool = True, timeout: float = float("inf"),
-        n_calls: int = 1, n_random_starts: int = 1, random_seed: int = None
+        n_calls: int = None, n_random_starts: int = 1, random_seed: int = None, warm_start_path: str = None
     ):
         """
         Sets up the class, creates the config mapper if needed, the evaluate function, and the genetic algorithm parameters
@@ -41,10 +41,15 @@ class TuningBayes(TuningBase):
         :param n_calls: the number of calls to make
         :param n_random_starts: the number of times to randomly start
         :param random_seed: set the random seed
+        :param warm_start_path: the path to a csv file containing warm starts
         """
         super().__init__(evaluate_outside_function, tuning_config, original_config, output_dir, verbose, minimize, timeout, random_seed)
         self.n_calls = n_calls
         self.n_random_starts = n_random_starts
+        self.warm_start_path = warm_start_path
+
+        if not self.minimize:
+            raise Exception("Bayesian Optimization does not support maximization. Please use tuningdeap or reformat the problem.")
 
         self.validate_config()
         self.space = self._instantiate_space()
@@ -55,16 +60,51 @@ class TuningBayes(TuningBase):
             logger.info("Finished initializing.")
 
     def run(self):
-        res_gp = gp_minimize(self.evaluate_function, self.space, n_calls=self.n_calls, random_state=self.random_seed, 
-                             n_random_starts=self.n_random_starts, verbose=self.verbose)
-        if self.verbose or self.output_dir is not None:
-            self.create_dataset_from_results(res_gp.x_iters, res_gp.func_vals, self.output_dir is not None, self.verbose, prefix="bayes")
+        config_values = []
+        scores = []
+        if self.timeout != float("inf"):
+            start_time = time.time()
+            # do the first so we can plug the values back in and do one iteration each time
+            res_gp = gp_minimize(self.evaluate_function, self.space, n_calls=1, random_state=self.random_seed, 
+                                    n_random_starts=self.n_random_starts, verbose=self.verbose)
+            while time.time() < start_time + self.timeout:
+                # this may add some overhead by re-creation, but is the easiest way to do a timed tuning
+                res_gp = gp_minimize(self.evaluate_function, self.space, n_calls=1, random_state=self.random_seed, 
+                                n_random_starts=self.n_random_starts, verbose=self.verbose, 
+                                x0=res_gp.x_iters, y0=res_gp.func_vals)
+            
+            if self.verbose or self.output_dir is not None:
+                self.create_dataset_from_results(res_gp.x_iters, res_gp.func_vals, self.output_dir is not None, self.verbose, prefix="bayes")
 
+
+        else:
+            if self.warm_start_path is not None:
+                warm_start = read_and_validate_previous(self.warm_start_path)
+                scores = results["score"].tolist()
+                config_values = results.drop("score", axis=1).to_numpy().tolist()
+                res_gp = gp_minimize(self.evaluate_function, self.space, n_calls=self.n_calls, random_state=self.random_seed, 
+                                    n_random_starts=self.n_random_starts, verbose=self.verbose,
+                                    x0=config_values, y0=scores)
+            else:
+                res_gp = gp_minimize(self.evaluate_function, self.space, n_calls=self.n_calls, random_state=self.random_seed, 
+                                    n_random_starts=self.n_random_starts, verbose=self.verbose)
+
+            if self.verbose or self.output_dir is not None:
+                self.create_dataset_from_results(res_gp.x_iters, res_gp.func_vals, self.output_dir is not None, self.verbose, prefix="bayes")
+
+        # save values
+        self.x_iters = res_gp.x_iters
+        self.scores = res_gp.func_vals
         return res_gp.x, res_gp.fun
  
     def validate_config(self):
-        pass
-
+        """
+        Used to validate essential config properties
+        """
+        if self.n_calls is None:
+            assert "n_calls" in self.tuning_config, "Tuning config did not have `n_calls`!"
+            self.n_calls = self.tuning_config["n_calls"]
+        
     def _instantiate_space(self):
         space = []
         self.bool_values = []

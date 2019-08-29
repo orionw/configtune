@@ -217,6 +217,7 @@ class TuningBase:
         :param output_to_file: a boolean indicating whether or not to write to file
         :param verbose: a boolean indicating whether or not to print the results
         :param prefix: the prefix for the file to be written
+        :return the results in a csv format with columns "score" and the names of the parameters
         """
         assert len(params) == len(scores), "scores and params were different lengths! params: {}, scores: {}".format(len(params), len(scores))
         full_named_items = []
@@ -236,3 +237,18 @@ class TuningBase:
             results.to_csv(output_path)
         if verbose:
             print(results)
+
+        return results
+
+    def read_and_validate_previous(self, path):
+        """
+        A common function for warm starting the tuning.  Takes in a csv filepath and returns the validated DataFrame
+        :param path: a str containing the path to the warm start csv file
+        :return a Pandas DataFrame of the warm start
+        """
+        if not os.path.isfile(path):
+            raise ValueError("path to initial warm start: {}, was not a valid file or did not exist".format(self.init_population_path))
+
+        warm_start = pd.read_csv(path, header=0, index_col=False)
+        assert set(warm_start.columns.tolist()) == set(self.order_of_keys + ["score"]), "given csv file did not contain the same parameters as the tuning config"
+        return warm_start

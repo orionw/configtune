@@ -207,11 +207,7 @@ class TuningDeap(TuningBase):
         :param init_population: the deap generated list of individuals
         :return the init_population that has been populated by the csv file
         """
-        if not os.path.isfile(self.init_population_path):
-            raise ValueError("path to initial population: {}, was not a valid file or did not exist".format(self.init_population_path))
-
-        previous_population = pd.read_csv(self.init_population_path, header=0, index_col=False)
-        assert set(previous_population.columns.tolist()) == set(self.order_of_keys + ["score"]), "given csv file did not contain the same parameters as the tuning config"
+        previous_population = self.read_and_validate_previous(self.init_population_path)
 
         # get the best given if more than population_size given
         previous_population.sort_values(by=["score"])

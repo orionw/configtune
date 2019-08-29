@@ -25,6 +25,6 @@ class TestNoConfig(unittest.TestCase):
     def test_no_config_basic(self):
         def eval_function(chromosomes):
             return DummyModel().predict_no_config(chromosomes)[0]
-        tune = TuningBayes(eval_function, self.tuning_config)
+        tune = TuningBayes(eval_function, self.tuning_config, n_calls=2)
         best_config, best_score = tune.run()
         assert type(best_score) == np.float64, "wrong type was returned, expected float was {}".format(type(best_score))
