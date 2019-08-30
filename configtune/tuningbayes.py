@@ -56,7 +56,16 @@ class TuningBayes(TuningBase):
             warnings.warn("TuningBayes called with 0 calls.  No calls will be made")
 
         if not self.minimize:
-            raise Exception("Bayesian Optimization does not support maximization. Please use configtune or reformat the problem.")
+            self.optimize = -1
+            def maximize_wrapper(config):
+                return -1 * self.evaluate_function(config)
+            if self.verbose:
+                warnings.warn("maximization is done by flipping the sign - verbose results are -1x the true value")
+            self.evaluate_function_bayes = maximize_wrapper
+    
+        else:
+            self.optimize = 1
+            self.evaluate_function_bayes = self.evaluate_function
 
         self.validate_config()
         self.space = self._instantiate_space()
@@ -67,32 +76,38 @@ class TuningBayes(TuningBase):
             logger.info("Finished initializing.")
 
     def run(self):
-        config_values = []
-        scores = []
+        """
+        The main function that runs the bayesian optimization and returns the results.  
+        :returns
+            config_values: that match the best configuration
+            score: the best score that matches the best configuration
+        """
         args, no_warm_start_args = self.prepare_args()
         if self.timeout != float("inf"):
             start_time = time.time()
             # do the first so we can plug the values back in and do one iteration each time
-            res_gp = gp_minimize(self.evaluate_function, self.space, n_calls=1, random_state=self.random_seed, verbose=self.verbose, **args)
+            res_gp = gp_minimize(self.evaluate_function_bayes, self.space, n_calls=1, random_state=self.random_seed, verbose=self.verbose, **args)
             while time.time() < start_time + self.timeout:
                 # this may add some overhead by re-creation, but is the easiest way to do a timed tuning
-                res_gp = gp_minimize(self.evaluate_function, self.space, n_calls=1, random_state=self.random_seed, verbose=self.verbose, 
+                res_gp = gp_minimize(self.evaluate_function_bayes, self.space, n_calls=1, random_state=self.random_seed, verbose=self.verbose, 
                                 x0=res_gp.x_iters, y0=res_gp.func_vals, **no_warm_start_args)
             
             if self.verbose or self.output_dir is not None:
-                self.create_dataset_from_results(res_gp.x_iters, res_gp.func_vals, self.output_dir is not None, self.verbose, prefix="bayes")
+                # if optimize == -1 flip it back to positive
+                self.create_dataset_from_results(res_gp.x_iters, res_gp.func_vals * self.optimize, self.output_dir is not None, self.verbose, prefix="bayes")
 
 
         else:
-            res_gp = gp_minimize(self.evaluate_function, self.space, n_calls=self.n_calls, random_state=self.random_seed, verbose=self.verbose, **args)
+            res_gp = gp_minimize(self.evaluate_function_bayes, self.space, n_calls=self.n_calls, random_state=self.random_seed, verbose=self.verbose, **args)
 
             if self.verbose or self.output_dir is not None:
-                self.create_dataset_from_results(res_gp.x_iters, res_gp.func_vals, self.output_dir is not None, self.verbose, prefix="bayes")
+                # if optimize == -1 flip it back to positive
+                self.create_dataset_from_results(res_gp.x_iters, res_gp.func_vals * self.optimize, self.output_dir is not None, self.verbose, prefix="bayes")
 
         # save values
         self.x_iters = res_gp.x_iters
-        self.scores = res_gp.func_vals
-        return res_gp.x, res_gp.fun
+        self.scores = res_gp.func_vals * self.optimize
+        return res_gp.x, res_gp.fun * self.optimize
  
     def validate_config(self):
         """
@@ -103,6 +118,9 @@ class TuningBayes(TuningBase):
             self.n_calls = self.tuning_config["n_calls"]
         
     def _instantiate_space(self):
+        """
+        Creates the ranges and parameters needed for bayesian optimization
+        """
         space = []
         self.bool_values = []
         self.categorical_values = {}
@@ -163,5 +181,7 @@ class TuningBayes(TuningBase):
         """
         warm_start = self.read_and_validate_previous(self.warm_start_path)
         scores = warm_start["score"].tolist()
+        # flip to negative if maximize
+        scores *= self.optimize
         config_values = warm_start.drop("score", axis=1).to_numpy().tolist()
         return scores, config_values
