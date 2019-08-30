@@ -60,7 +60,7 @@ class TestPopulationValidityBayes(unittest.TestCase):
             return np.sum(chromosomes[:len(chromosomes) - 1])
 
         n_calls = 10
-        tune = TuningBayes(eval_function, self.tuning_config, output_dir="./tmp", n_calls=n_calls, minimize=False)
+        tune = TuningBayes(eval_function, self.tuning_config, output_dir="./tmp", n_calls=n_calls, minimize=False, verbose=True)
         _, _ = tune.run()
         # check the generations
         for generations in range(n_calls):

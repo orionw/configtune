@@ -59,6 +59,8 @@ class TuningBayes(TuningBase):
             self.optimize = -1
             def maximize_wrapper(config):
                 return -1 * self.evaluate_function(config)
+            if self.verbose:
+                warnings.warn("maximization is done by flipping the sign - verbose results are -1x the true value")
             self.evaluate_function_bayes = maximize_wrapper
     
         else:
@@ -85,14 +87,16 @@ class TuningBayes(TuningBase):
                                 x0=res_gp.x_iters, y0=res_gp.func_vals, **no_warm_start_args)
             
             if self.verbose or self.output_dir is not None:
-                self.create_dataset_from_results(res_gp.x_iters, res_gp.func_vals, self.output_dir is not None, self.verbose, prefix="bayes")
+                # if optimize == -1 flip it back to positive
+                self.create_dataset_from_results(res_gp.x_iters, res_gp.func_vals * self.optimize, self.output_dir is not None, self.verbose, prefix="bayes")
 
 
         else:
             res_gp = gp_minimize(self.evaluate_function_bayes, self.space, n_calls=self.n_calls, random_state=self.random_seed, verbose=self.verbose, **args)
 
             if self.verbose or self.output_dir is not None:
-                self.create_dataset_from_results(res_gp.x_iters, res_gp.func_vals, self.output_dir is not None, self.verbose, prefix="bayes")
+                # if optimize == -1 flip it back to positive
+                self.create_dataset_from_results(res_gp.x_iters, res_gp.func_vals * self.optimize, self.output_dir is not None, self.verbose, prefix="bayes")
 
         # save values
         self.x_iters = res_gp.x_iters
@@ -168,6 +172,5 @@ class TuningBayes(TuningBase):
         """
         warm_start = self.read_and_validate_previous(self.warm_start_path)
         scores = warm_start["score"].tolist()
-        scores = scores * self.optimize
         config_values = warm_start.drop("score", axis=1).to_numpy().tolist()
         return scores, config_values

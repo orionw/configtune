@@ -223,7 +223,6 @@ class TuningBase:
         """
         assert len(params) == len(scores), "scores and params were different lengths! params: {}, scores: {}".format(len(params), len(scores))
         full_named_items = []
-        scores *= optimize
         for ind_index, ind_params in enumerate(params):
             named_items = {}
             # get the named parameters
