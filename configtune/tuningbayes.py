@@ -100,8 +100,8 @@ class TuningBayes(TuningBase):
 
         # save values
         self.x_iters = res_gp.x_iters
-        self.scores = res_gp.func_vals
-        return res_gp.x, res_gp.fun
+        self.scores = res_gp.func_vals * self.optimize
+        return res_gp.x, res_gp.fun * self.optimize
  
     def validate_config(self):
         """
