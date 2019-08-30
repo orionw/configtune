@@ -76,6 +76,12 @@ class TuningBayes(TuningBase):
             logger.info("Finished initializing.")
 
     def run(self):
+        """
+        The main function that runs the bayesian optimization and returns the results.  
+        :returns
+            config_values: that match the best configuration
+            score: the best score that matches the best configuration
+        """
         args, no_warm_start_args = self.prepare_args()
         if self.timeout != float("inf"):
             start_time = time.time()
@@ -112,6 +118,9 @@ class TuningBayes(TuningBase):
             self.n_calls = self.tuning_config["n_calls"]
         
     def _instantiate_space(self):
+        """
+        Creates the ranges and parameters needed for bayesian optimization
+        """
         space = []
         self.bool_values = []
         self.categorical_values = {}
