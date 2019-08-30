@@ -209,7 +209,7 @@ class TuningBase:
             return chromosome
 
     def create_dataset_from_results(self, params: typing.List[typing.List], scores: typing.List[float], output_to_file: bool = False, 
-                                    verbose: bool = False, prefix="bayes"):
+                                    verbose: bool = False, prefix="bayes", optimize: int = 1):
         """
         This function is abstracted away to gather the info needed to write the results to file.  It will gather the correct names, scores and 
         deal with outputting or printing them depending on the config
@@ -218,10 +218,12 @@ class TuningBase:
         :param output_to_file: a boolean indicating whether or not to write to file
         :param verbose: a boolean indicating whether or not to print the results
         :param prefix: the prefix for the file to be written
+        :param optimize: whether to minimize (-1) or maximize (1).  Used for multiplying results back
         :return the results in a csv format with columns "score" and the names of the parameters
         """
         assert len(params) == len(scores), "scores and params were different lengths! params: {}, scores: {}".format(len(params), len(scores))
         full_named_items = []
+        scores *= optimize
         for ind_index, ind_params in enumerate(params):
             named_items = {}
             # get the named parameters

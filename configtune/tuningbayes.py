@@ -56,7 +56,14 @@ class TuningBayes(TuningBase):
             warnings.warn("TuningBayes called with 0 calls.  No calls will be made")
 
         if not self.minimize:
-            raise Exception("Bayesian Optimization does not support maximization. Please use configtune or reformat the problem.")
+            self.optimize = -1
+            def maximize_wrapper(config):
+                return -1 * self.evaluate_function(config)
+            self.evaluate_function_bayes = maximize_wrapper
+    
+        else:
+            self.optimize = 1
+            self.evaluate_function_bayes = self.evaluate_function
 
         self.validate_config()
         self.space = self._instantiate_space()
@@ -67,16 +74,14 @@ class TuningBayes(TuningBase):
             logger.info("Finished initializing.")
 
     def run(self):
-        config_values = []
-        scores = []
         args, no_warm_start_args = self.prepare_args()
         if self.timeout != float("inf"):
             start_time = time.time()
             # do the first so we can plug the values back in and do one iteration each time
-            res_gp = gp_minimize(self.evaluate_function, self.space, n_calls=1, random_state=self.random_seed, verbose=self.verbose, **args)
+            res_gp = gp_minimize(self.evaluate_function_bayes, self.space, n_calls=1, random_state=self.random_seed, verbose=self.verbose, **args)
             while time.time() < start_time + self.timeout:
                 # this may add some overhead by re-creation, but is the easiest way to do a timed tuning
-                res_gp = gp_minimize(self.evaluate_function, self.space, n_calls=1, random_state=self.random_seed, verbose=self.verbose, 
+                res_gp = gp_minimize(self.evaluate_function_bayes, self.space, n_calls=1, random_state=self.random_seed, verbose=self.verbose, 
                                 x0=res_gp.x_iters, y0=res_gp.func_vals, **no_warm_start_args)
             
             if self.verbose or self.output_dir is not None:
@@ -84,7 +89,7 @@ class TuningBayes(TuningBase):
 
 
         else:
-            res_gp = gp_minimize(self.evaluate_function, self.space, n_calls=self.n_calls, random_state=self.random_seed, verbose=self.verbose, **args)
+            res_gp = gp_minimize(self.evaluate_function_bayes, self.space, n_calls=self.n_calls, random_state=self.random_seed, verbose=self.verbose, **args)
 
             if self.verbose or self.output_dir is not None:
                 self.create_dataset_from_results(res_gp.x_iters, res_gp.func_vals, self.output_dir is not None, self.verbose, prefix="bayes")
@@ -163,5 +168,6 @@ class TuningBayes(TuningBase):
         """
         warm_start = self.read_and_validate_previous(self.warm_start_path)
         scores = warm_start["score"].tolist()
+        scores = scores * self.optimize
         config_values = warm_start.drop("score", axis=1).to_numpy().tolist()
         return scores, config_values

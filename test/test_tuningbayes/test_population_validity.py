@@ -12,7 +12,6 @@ class TestPopulationValidityBayes(unittest.TestCase):
 
     def setUp(self):
         self.tuning_config = {
-            "population_size": 100,
             "attributes": {
                 "name1": {
                     "type": "float",
@@ -47,11 +46,24 @@ class TestPopulationValidityBayes(unittest.TestCase):
         def eval_function(chromosomes):
             return np.sum(chromosomes[:len(chromosomes) - 1])
 
-        n_generations = 10
-        tune = TuningBayes(eval_function, self.tuning_config, output_dir="./tmp", n_calls=10)
+        n_calls = 10
+        tune = TuningBayes(eval_function, self.tuning_config, output_dir="./tmp", n_calls=n_calls)
         _, _ = tune.run()
         # check the generations
-        for generations in range(n_generations):
+        for generations in range(n_calls):
+            gen = pd.read_csv("./tmp/bayes.csv", header=0, index_col=0)
+            for index, row in gen.iterrows():
+                assert math.isclose(eval_function(row[:len(row) - 1].to_numpy()), row[-1]) == True, "did not get the score expected: output: {}, expected: {}".format(eval_function(row[:len(row) - 1].to_numpy()), row[-1])
+
+    def test_population_output_correct_bayes_maximize(self):
+        def eval_function(chromosomes):
+            return np.sum(chromosomes[:len(chromosomes) - 1])
+
+        n_calls = 10
+        tune = TuningBayes(eval_function, self.tuning_config, output_dir="./tmp", n_calls=n_calls, minimize=False)
+        _, _ = tune.run()
+        # check the generations
+        for generations in range(n_calls):
             gen = pd.read_csv("./tmp/bayes.csv", header=0, index_col=0)
             for index, row in gen.iterrows():
                 assert math.isclose(eval_function(row[:len(row) - 1].to_numpy()), row[-1]) == True, "did not get the score expected: output: {}, expected: {}".format(eval_function(row[:len(row) - 1].to_numpy()), row[-1])
