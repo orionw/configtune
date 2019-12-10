@@ -251,6 +251,6 @@ class TuningBase:
         if not os.path.isfile(path):
             raise ValueError("path to initial warm start: {}, was not a valid file or did not exist".format(self.warm_start_path))
 
-        warm_start = pd.read_csv(path, header=0, index_col=False)
+        warm_start = pd.read_csv(path, header=0, index_col=0)
         assert set(warm_start.columns.tolist()) == set(self.order_of_keys + ["score"]), "given csv file did not contain the same parameters as the tuning config"
         return warm_start

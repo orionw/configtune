@@ -180,8 +180,8 @@ class TuningBayes(TuningBase):
             config_values: the parameters that generated those scores
         """
         warm_start = self.read_and_validate_previous(self.warm_start_path)
-        scores = warm_start["score"].tolist()
+        scores = np.array(warm_start["score"].tolist())
         # flip to negative if maximize
         scores *= self.optimize
         config_values = warm_start.drop("score", axis=1).to_numpy().tolist()
-        return scores, config_values
+        return scores.tolist(), config_values
